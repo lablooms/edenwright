@@ -113,6 +113,9 @@ function registerWindowIpc(): void {
   ipcMain.handle("window:is-maximized", (event) => {
     return BrowserWindow.fromWebContents(event.sender)?.isMaximized() ?? false;
   });
+  ipcMain.handle("window:toggle-devtools", (event) => {
+    BrowserWindow.fromWebContents(event.sender)?.webContents.toggleDevTools();
+  });
 }
 
 let finalSnapshotTaken = false;

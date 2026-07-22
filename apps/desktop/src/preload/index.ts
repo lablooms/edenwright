@@ -14,6 +14,7 @@ const api: EdenwrightApi = {
     toggleMaximize: () => ipcRenderer.invoke("window:toggle-maximize"),
     close: () => ipcRenderer.invoke("window:close"),
     isMaximized: () => ipcRenderer.invoke("window:is-maximized"),
+    toggleDevTools: () => ipcRenderer.invoke("window:toggle-devtools"),
     onMaximizedChanged: (callback) => {
       const listener = (_event: unknown, isMaximized: boolean) => {
         callback(isMaximized);

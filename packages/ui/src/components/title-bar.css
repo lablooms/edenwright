@@ -33,6 +33,18 @@
   color: var(--ew-leaf);
 }
 
+.ew-titlebar__badge--button {
+  font: inherit;
+  font-size: 11px;
+  border: none;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.ew-titlebar__badge--button:hover {
+  background: var(--ew-surface-active);
+}
+
 .ew-titlebar__drag {
   flex: 1;
   align-self: stretch;

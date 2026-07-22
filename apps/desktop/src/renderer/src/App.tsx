@@ -23,6 +23,7 @@ import { CorkboardView } from "./components/corkboard-view";
 import { DetailsPanel } from "./components/details-panel";
 import { ExportModal } from "./components/export-modal";
 import { FilesPanel } from "./components/files-panel";
+import { HelpMenu } from "./components/help-menu";
 import { ModalHost } from "./components/modal-host";
 import { NewProjectModal } from "./components/new-project-modal";
 import { Palette } from "./components/palette";
@@ -209,6 +210,8 @@ export function App() {
         onToggleMaximize={() => void bridge.window.toggleMaximize()}
         onClose={() => void bridge.window.close()}
         onTogglePanel={togglePanel}
+        menu={<HelpMenu />}
+        onBadgeClick={() => useChromeStore.getState().setAboutOpen(true)}
       />
       <div className="app-shell__body">
         <PanelLayout

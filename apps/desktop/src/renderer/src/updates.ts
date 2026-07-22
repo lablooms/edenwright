@@ -18,6 +18,63 @@ const APP_TAG_RE = /^v\d+\.\d+\.\d+(-[a-z0-9.-]+)?$/i;
 
 let checked = false;
 
+type LatestRelease = { tag: string; newer: boolean };
+
+async function fetchLatestRelease(): Promise<LatestRelease | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const response = await fetch(RELEASES_API, {
+    signal: controller.signal,
+    headers: { Accept: "application/vnd.github+json" },
+  });
+  clearTimeout(timer);
+  if (!response.ok) return null;
+  const releases = (await response.json()) as { tag_name?: string }[];
+  if (!Array.isArray(releases)) return null;
+  // Newest first from the API; the first APP-shaped tag is our latest.
+  const tag = releases
+    .map((release) => release.tag_name)
+    .find(
+      (candidate) =>
+        typeof candidate === "string" && APP_TAG_RE.test(candidate),
+    );
+  if (!tag) return { tag: "", newer: false };
+  const current = await window.edenwright.app.version();
+  return { tag, newer: isNewer(tag, current) };
+}
+
+/** Manual check (Help menu): reports every outcome, never silently. */
+export async function checkForUpdatesManual(): Promise<
+  { kind: "latest" } | { kind: "newer"; tag: string } | { kind: "offline" }
+> {
+  try {
+    const latest = await fetchLatestRelease();
+    if (latest === null) return { kind: "offline" };
+    if (latest.newer) return { kind: "newer", tag: latest.tag };
+    return { kind: "latest" };
+  } catch {
+    return { kind: "offline" };
+  }
+}
+
+/** The update modal for a newer release (shared by auto + manual paths). */
+async function showNewerModal(tag: string): Promise<void> {
+  const current = await window.edenwright.app.version();
+  const choice = await useAppStore.getState().showModal({
+    title: `Edenwright ${tag.replace(/^v/, "")} is out`,
+    body: `You're on ${current}. Beta doesn't auto-update — grab the new installer when you're ready; your eden is plain files and goes with you.`,
+    actions: [
+      { id: "download", label: "Open downloads", primary: true },
+      { id: "later", label: "Later" },
+    ],
+  });
+  if (choice === "download") {
+    await window.edenwright.app.openExternal(RELEASES_PAGE);
+  }
+}
+
+export { showNewerModal };
+
 /** Semver-ish compare: true when `candidate` is newer than `current`. */
 export function isNewer(candidate: string, current: string): boolean {
   const parse = (version: string) => {
@@ -44,36 +101,8 @@ export async function checkForUpdates(): Promise<void> {
   if (checked) return;
   checked = true;
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-    const response = await fetch(RELEASES_API, {
-      signal: controller.signal,
-      headers: { Accept: "application/vnd.github+json" },
-    });
-    clearTimeout(timer);
-    if (!response.ok) return;
-    const releases = (await response.json()) as { tag_name?: string }[];
-    if (!Array.isArray(releases)) return;
-    // Newest first from the API; the first APP-shaped tag is our latest.
-    const latest = releases
-      .map((release) => release.tag_name)
-      .find((tag) => typeof tag === "string" && APP_TAG_RE.test(tag));
-    if (!latest) return;
-
-    const current = await window.edenwright.app.version();
-    if (!isNewer(latest, current)) return;
-
-    const choice = await useAppStore.getState().showModal({
-      title: `Edenwright ${latest.replace(/^v/, "")} is out`,
-      body: `You're on ${current}. Beta doesn't auto-update — grab the new installer when you're ready; your eden is plain files and goes with you.`,
-      actions: [
-        { id: "download", label: "Open downloads", primary: true },
-        { id: "later", label: "Later" },
-      ],
-    });
-    if (choice === "download") {
-      await window.edenwright.app.openExternal(RELEASES_PAGE);
-    }
+    const latest = await fetchLatestRelease();
+    if (latest?.newer) await showNewerModal(latest.tag);
   } catch {
     // Offline, rate-limited, or blocked: fail silently (golden rule 6).
   }

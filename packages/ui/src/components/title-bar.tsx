@@ -13,6 +13,10 @@ export interface TitleBarProps {
   onToggleMaximize: () => void;
   onClose: () => void;
   onTogglePanel: () => void;
+  /** App-level menu (Help/About), rendered before the window controls. */
+  menu?: React.ReactNode;
+  /** The beta badge opens About when provided. */
+  onBadgeClick?: () => void;
 }
 
 /** Frameless window chrome: brand left, drag region center, controls right. */
@@ -24,6 +28,8 @@ export function TitleBar({
   onToggleMaximize,
   onClose,
   onTogglePanel,
+  menu,
+  onBadgeClick,
 }: TitleBarProps) {
   return (
     <header className="ew-titlebar">
@@ -33,10 +39,22 @@ export function TitleBar({
       >
         <BloomIcon size={18} halo={false} />
         <span className="ew-titlebar__wordmark">Edenwright</span>
-        <span className="ew-titlebar__badge">beta</span>
+        {onBadgeClick ? (
+          <button
+            type="button"
+            className="ew-titlebar__badge ew-titlebar__badge--button"
+            title="About Edenwright"
+            onClick={onBadgeClick}
+          >
+            beta
+          </button>
+        ) : (
+          <span className="ew-titlebar__badge">beta</span>
+        )}
       </div>
       <div className="ew-titlebar__drag" aria-hidden />
       <div className="ew-titlebar__actions">
+        {menu}
         <button
           type="button"
           className="ew-titlebar__button"

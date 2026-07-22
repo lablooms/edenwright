@@ -15,6 +15,10 @@
   --ew-ink: #ede7f6;
   --ew-ink-dim: #9c93b8;
 
+  /* Lablooms pink — credits and "made by" moments ONLY, never a UI accent
+     (brand law, SPEC §3.1). */
+  --ew-lablooms-pink: #ff2e8c;
+
   /* Derived surfaces & lines (transparency over the palette, §3.1) */
   --ew-surface-raised: var(--ew-abyss);
   --ew-surface-hover: color-mix(in srgb, var(--ew-ink) 6%, transparent);

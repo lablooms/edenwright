@@ -1,0 +1,128 @@
+/* Help menu + About dialog — the one place Lablooms pink may live (§3.1). */
+
+.help-menu {
+  position: relative;
+  -webkit-app-region: no-drag;
+}
+
+.help-menu__dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  padding: var(--ew-space-1);
+  background: var(--ew-surface-raised);
+  border: 1px solid var(--ew-border-strong);
+  border-radius: var(--ew-radius-md);
+  box-shadow: 0 8px 24px var(--ew-scrim);
+}
+
+.help-menu__dropdown button {
+  display: flex;
+  align-items: center;
+  gap: var(--ew-space-2);
+  padding: var(--ew-space-2) var(--ew-space-3);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  color: var(--ew-ink);
+  background: transparent;
+  border: none;
+  border-radius: var(--ew-radius-sm);
+  cursor: pointer;
+  transition: background var(--ew-motion-fast) var(--ew-ease-out);
+}
+
+.help-menu__dropdown button:hover {
+  background: var(--ew-surface-hover);
+}
+
+.about-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ew-scrim);
+}
+
+.about {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ew-space-2);
+  width: min(400px, calc(100vw - 64px));
+  padding: var(--ew-space-8);
+  text-align: center;
+  background: var(--ew-surface-raised);
+  border: 1px solid var(--ew-border-strong);
+  border-radius: var(--ew-radius-lg);
+  box-shadow: 0 16px 48px var(--ew-scrim);
+}
+
+.about__name {
+  margin: var(--ew-space-2) 0 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ew-ink);
+}
+
+.about__version {
+  margin: 0;
+  font-family: var(--ew-font-mono);
+  font-size: 12px;
+  color: var(--ew-leaf);
+}
+
+.about__line {
+  margin: var(--ew-space-2) 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ew-ink-dim);
+}
+
+.about__credit {
+  margin: var(--ew-space-1) 0 0;
+  font-size: 12px;
+  color: var(--ew-ink-dim);
+}
+
+/* The one pink pixel-cluster in the whole app — the brand credit (§3.1). */
+.about__pink {
+  color: var(--ew-lablooms-pink);
+  font-weight: 600;
+}
+
+.about__links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--ew-space-2) var(--ew-space-3);
+  margin-top: var(--ew-space-3);
+}
+
+.about__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ew-leaf);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.about__link:hover {
+  color: var(--ew-accent-hover);
+  text-decoration: underline;
+}
+
+.about__actions {
+  margin-top: var(--ew-space-4);
+}

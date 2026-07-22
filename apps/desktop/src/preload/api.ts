@@ -14,6 +14,8 @@ export interface WindowControls {
   toggleMaximize(): Promise<void>;
   close(): Promise<void>;
   isMaximized(): Promise<boolean>;
+  /** DevTools for plugin developers and the curious (Help menu). */
+  toggleDevTools(): Promise<void>;
   /** Subscribe to maximize/restore changes; returns an unsubscribe. */
   onMaximizedChanged(callback: (isMaximized: boolean) => void): () => void;
 }
