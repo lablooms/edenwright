@@ -14,21 +14,24 @@ folders.
 Inside `.eden/` you'll find `index.db` — a cache. Delete it; lose nothing.
 It rebuilds from your files every time the eden opens.
 
-## Projects & engines
+## Projects & presets
 
-A project is a work of one kind. **New project** offers five engines, each a
-family of presets:
+A project is a work of one kind — and "kind" is just data. **New project**
+shows ~20 presets grouped by medium:
 
 - **Prose** — novels, novellas, collections, serials, light novels, memoir
-- **Script** — feature film, TV, stage, animation, audio drama
+- **Screenplay** — feature film, TV, stage, animation, audio drama
 - **Comic** — manga, western, webtoon, picture book
-- **Story graph** — visual novels, game narrative, interactive fiction,
-  TTRPG campaigns (a node canvas over your scenes)
+- **Interactive** — visual novels, game narrative, interactive fiction,
+  TTRPG campaigns
 - **World** — worldbuilding and series bibles (these live in `Worlds/`)
 
-Presets stamp sensible defaults (POV, status, structure) on every file you
-create. Projects are `project.json` + folders of markdown — open one in any
-text editor and it's still yours.
+Every project shares one skeleton: a tree of Markdown documents, a codex,
+and `project.json`. The preset decides what your documents are called
+("Scene", "Page", "Episode"), what folders appear, and which frontmatter
+fields get stamped. Medium-specific _powers_ — screenplay formatting, comic
+panel rails, a story canvas, Fountain/Ren'Py exports — are optional plugins
+from the community tab, installed per taste.
 
 ## The editor
 
@@ -74,16 +77,13 @@ every world, its entity count, and who links it.
 
 The download icon in the editor header (or "Export project…" in the
 palette) opens the export dialog. Files land in the project's gitignored
-`exports/` folder:
+`exports/` folder.
 
-- **Prose** — standard manuscript docx, EPUB, PDF, clean markdown
-- **Script** — industry PDF, Fountain, Final Draft FDX, plain text
-- **Comic** — comic script PDF/docx
-- **Story graph** — Ren'Py skeleton, Twee, outline PDF/docx, JSON dump
-- **World** — wiki-style compendium PDF/docx
-
-Community exporters (like the seed **Extra Exporters**) add formats to the
-same dialog.
+**Every project** gets the universal formats: manuscript Word, EPUB, PDF,
+clean Markdown, single-file HTML, and a Markdown zip bundle. Install the
+**Medium Exporters** plugin and your medium's serializations join the same
+dialog: industry screenplay PDF, Fountain, Final Draft FDX, comic script
+PDF, Ren'Py skeleton, Twee, outline PDF, and a graph JSON dump.
 
 ## Plugins & themes
 
