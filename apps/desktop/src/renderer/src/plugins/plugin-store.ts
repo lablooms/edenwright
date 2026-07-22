@@ -3,6 +3,7 @@ import { BUILTIN_PRESETS } from "@edenwright/core";
 import type {
   Command,
   Disposable,
+  EditorExtensionFactory,
   EntityTypeDefinition,
   ExporterDefinition,
   PluginManifest,
@@ -42,7 +43,7 @@ interface PluginSurfaceState {
   statusBarItems: StatusBarItem[];
   views: RegisteredView[];
   settingsTabs: SettingsTabDefinition[];
-  editorExtensions: Extension[];
+  editorExtensions: (Extension | EditorExtensionFactory)[];
   entityTypes: EntityTypeDefinition[];
   exporters: ExporterDefinition[];
   presets: PresetDefinition[];
@@ -59,7 +60,7 @@ interface PluginSurfaceState {
   addStatusBarItem(item: StatusBarItem): Disposable;
   addView(view: RegisteredView): Disposable;
   addSettingsTab(tab: SettingsTabDefinition): Disposable;
-  addEditorExtension(extension: Extension): Disposable;
+  addEditorExtension(extension: Extension | EditorExtensionFactory): Disposable;
   addEntityType(def: EntityTypeDefinition): Disposable;
   addExporter(def: ExporterDefinition): Disposable;
   addPreset(preset: PresetDefinition): Disposable;

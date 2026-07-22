@@ -1,6 +1,10 @@
 import { useDeferredValue, useMemo } from "react";
 
-import { countWords, kindFromPath } from "@edenwright/core";
+import {
+  countWords,
+  kindFromPath,
+  projectNameFromPath,
+} from "@edenwright/core";
 import { CalendarClock, Download, FileText, LayoutGrid } from "lucide-react";
 
 import { Button, EmptyState, Icon } from "@edenwright/ui";
@@ -30,10 +34,31 @@ export function Viewer() {
   const fontSize = useAppStore(
     (state) => state.edenState?.current?.settings.editor.fontSize ?? 17,
   );
-  const pluginExtensions = usePluginStore((state) => state.editorExtensions);
+  const registeredExtensions = usePluginStore(
+    (state) => state.editorExtensions,
+  );
+  const projects = useAppStore((state) => state.projects);
   const editSource = useAppStore((state) => state.editSource);
   const setMainView = useAppStore((state) => state.setMainView);
   const setExportOpen = useAppStore((state) => state.setExportOpen);
+
+  // Factories are computed per editor with the file's preset/medium —
+  // that's how medium plugins gate themselves (SPEC v2 §7.2).
+  const pluginExtensions = useMemo(() => {
+    if (!openFile) return [];
+    const projectName = projectNameFromPath(openFile.path);
+    const project = projects.find((item) => item.name === projectName);
+    const context = {
+      filePath: openFile.path,
+      medium: project?.medium ?? null,
+      preset: project?.preset ?? null,
+    };
+    return registeredExtensions
+      .map((extension) =>
+        typeof extension === "function" ? extension(context) : extension,
+      )
+      .filter((extension) => extension !== null);
+  }, [openFile, projects, registeredExtensions]);
 
   const reveal = useAppStore((state) => state.reveal);
   const setDraft = useAppStore((state) => state.setDraft);

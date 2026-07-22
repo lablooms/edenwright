@@ -17,7 +17,11 @@ export type {
   VanillaViewDefinition,
   WorkspaceRegistry,
 } from "./workspace.js";
-export type { EditorRegistry } from "./editor.js";
+export type {
+  EditorExtensionContext,
+  EditorExtensionFactory,
+  EditorRegistry,
+} from "./editor.js";
 export type { SettingsRegistry, SettingsTabDefinition } from "./settings.js";
 export type {
   EntityFieldDefinition,
