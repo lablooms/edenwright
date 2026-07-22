@@ -1,0 +1,99 @@
+/* Stats Deluxe panel — token colors only. */
+.stats-panel {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+.stats-panel h3 {
+  margin: 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ew-ink);
+}
+.stats-panel h4 {
+  margin: 8px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ew-ink-dim);
+}
+.stats-blurb {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ew-ink-dim);
+}
+.stats-picker {
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ew-ink);
+  background: var(--ew-surface-raised);
+  border: 1px solid var(--ew-border);
+  border-radius: var(--ew-radius-sm);
+}
+.stats-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.stats-pace {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--ew-ink-dim);
+}
+.stats-bar__label {
+  flex: 0 0 76px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stats-bar__track {
+  flex: 1;
+  height: 8px;
+  background: var(--ew-surface-hover);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.stats-bar__fill {
+  display: block;
+  height: 100%;
+  background: var(--ew-leaf);
+  border-radius: 4px;
+}
+.stats-bar__value {
+  flex: 0 0 34px;
+  text-align: right;
+  font-family: var(--ew-font-mono);
+}
+.stats-heatmap {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 3px;
+}
+.stats-heat {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background: var(--ew-surface-hover);
+}
+.stats-heat--1 {
+  background: color-mix(in srgb, var(--ew-leaf) 25%, transparent);
+}
+.stats-heat--2 {
+  background: color-mix(in srgb, var(--ew-leaf) 45%, transparent);
+}
+.stats-heat--3 {
+  background: color-mix(in srgb, var(--ew-leaf) 65%, transparent);
+}
+.stats-heat--4 {
+  background: var(--ew-leaf);
+}

@@ -1,0 +1,9 @@
+{
+  "id": "lablooms.namesmith",
+  "name": "Namesmith",
+  "version": "0.1.0-beta",
+  "minAppVersion": "0.1.0-beta",
+  "description": "A name generator with seeded culture and style lists. No network, all forge.",
+  "author": "Lablooms Studio",
+  "authorUrl": "https://github.com/lablooms"
+}

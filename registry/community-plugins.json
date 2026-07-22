@@ -72,15 +72,6 @@
       "author": "Lablooms Studio",
       "repo": "lablooms/edenwright",
       "releaseTag": "seed-stats-deluxe-v0.1.0"
-    },
-    {
-      "id": "lablooms.extra-exporters",
-      "name": "Extra Exporters",
-      "version": "0.1.0-beta",
-      "description": "Two more ways out: single-file HTML export and a Markdown zip bundle.",
-      "author": "Lablooms Studio",
-      "repo": "lablooms/edenwright",
-      "releaseTag": "seed-extra-exporters-v0.1.0"
     }
   ]
 }

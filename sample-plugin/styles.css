@@ -1,0 +1,37 @@
+/* Hello, eden panel styles. Always use the Edenwright CSS custom properties
+   (--ew-*) — hardcoded colors break every theme but yours. */
+
+.hello-eden-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ew-space-3);
+}
+
+.hello-eden-panel h3 {
+  margin: 0;
+  color: var(--ew-leaf);
+  font-weight: 500;
+}
+
+.hello-eden-panel p {
+  margin: 0;
+  color: var(--ew-ink-dim);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.hello-eden-panel button {
+  align-self: flex-start;
+  padding: var(--ew-space-2) var(--ew-space-4);
+  background: var(--ew-accent);
+  color: var(--ew-on-accent);
+  border: none;
+  border-radius: var(--ew-radius-sm);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.hello-eden-panel button:hover {
+  background: var(--ew-accent-hover);
+}

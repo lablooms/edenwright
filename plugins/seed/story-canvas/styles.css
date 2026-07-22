@@ -1,0 +1,163 @@
+/**
+ * Story Canvas plugin styles: the story-graph canvas (ported from the v1
+ * storygraph engine's GRAPH_STYLES). Tokens only — no gray boxes (golden
+ * rule 5).
+ */
+
+.ew-graph {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: var(--ew-space-2);
+}
+.ew-graph--empty {
+  padding: var(--ew-space-4);
+  font-size: 12px;
+  color: var(--ew-ink-dim);
+}
+.ew-graph__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--ew-space-2);
+}
+.ew-graph__toolbar button {
+  padding: 2px var(--ew-space-3);
+  font-size: 11px;
+  border-radius: 999px;
+  color: var(--ew-ink-dim);
+  border: 1px solid var(--ew-border);
+  background: none;
+  cursor: pointer;
+}
+.ew-graph__toolbar button:hover:not(:disabled) {
+  background: var(--ew-surface-hover);
+}
+.ew-graph__toolbar button[data-active] {
+  background: var(--ew-accent-tint);
+  color: var(--ew-leaf);
+  border-color: transparent;
+}
+.ew-graph__toolbar button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.ew-graph__zoom {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--ew-ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+.ew-graph__canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--ew-border);
+  border-radius: var(--ew-radius-md);
+  background: var(--ew-void);
+  cursor: grab;
+  touch-action: none;
+}
+.ew-graph__canvas:active {
+  cursor: grabbing;
+}
+.ew-graph__hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  font-size: 12px;
+  color: var(--ew-ink-dim);
+  pointer-events: none;
+}
+.ew-graph__edges {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.ew-graph__edge {
+  stroke: var(--ew-leaf-deep);
+  stroke-width: 1.5;
+}
+.ew-graph__edge-label {
+  fill: var(--ew-ink-dim);
+  font-size: 10px;
+  text-anchor: middle;
+}
+.ew-graph__node {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ew-space-2);
+  background: var(--ew-surface-raised);
+  border: 1px solid var(--ew-leaf-deep);
+  border-radius: var(--ew-radius-sm);
+  color: var(--ew-ink);
+  font-size: 12px;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  transition: box-shadow var(--ew-motion-fast) var(--ew-ease-out);
+}
+.ew-graph__node:hover {
+  box-shadow: 0 0 0 2px var(--ew-accent-tint);
+}
+.ew-graph__node[data-walk-current] {
+  border-color: var(--ew-leaf);
+  box-shadow: 0 0 0 3px var(--ew-accent-tint);
+}
+.ew-graph__walk {
+  padding: var(--ew-space-3);
+  border: 1px solid var(--ew-border);
+  border-radius: var(--ew-radius-md);
+  background: var(--ew-surface-raised);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ew-space-2);
+}
+.ew-graph__walk-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+.ew-graph__walk-head button {
+  font-size: 11px;
+  color: var(--ew-ink-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.ew-graph__walk-end {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ew-ink-dim);
+  font-style: italic;
+}
+.ew-graph__walk-choice {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ew-space-2);
+  padding: var(--ew-space-2) var(--ew-space-3);
+  border: 1px solid var(--ew-border);
+  border-radius: var(--ew-radius-sm);
+  background: none;
+  color: var(--ew-ink);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+.ew-graph__walk-choice:hover {
+  background: var(--ew-accent-tint);
+  border-color: var(--ew-leaf-deep);
+}
+.ew-graph__walk-target {
+  color: var(--ew-ink-dim);
+}

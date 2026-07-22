@@ -1,0 +1,9 @@
+{
+  "id": "lablooms.structure-wizards",
+  "name": "Structure Wizards",
+  "version": "0.1.0-beta",
+  "minAppVersion": "0.1.0-beta",
+  "description": "Guided outline generators — Snowflake, Save the Cat, Hero's Journey — that scaffold a project's tree.",
+  "author": "Lablooms Studio",
+  "authorUrl": "https://github.com/lablooms"
+}

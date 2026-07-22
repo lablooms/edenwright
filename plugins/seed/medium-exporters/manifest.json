@@ -1,0 +1,9 @@
+{
+  "id": "lablooms.medium-exporters",
+  "name": "Medium Exporters",
+  "version": "0.1.0-beta",
+  "minAppVersion": "0.1.0-beta",
+  "description": "Medium export formats: industry screenplay PDF, Fountain, Final Draft FDX, comic script PDF/text, Ren'Py skeleton, Twee, outline PDF, and a graph JSON dump.",
+  "author": "Lablooms Studio",
+  "authorUrl": "https://github.com/lablooms"
+}

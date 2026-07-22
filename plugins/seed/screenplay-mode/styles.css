@@ -1,0 +1,56 @@
+/**
+ * Screenplay Mode styles — the v1 CM theme, ported to CSS (SPEC §8.3).
+ * Plugin styles load app-wide, so every rule hangs off the marker class
+ * the extension puts on screenplay editors only. Chaining .cm-editor also
+ * outranks the app's font theme, which would otherwise re-style the page.
+ */
+
+.cm-editor.cm-ew-screenplay .cm-content,
+.cm-editor.cm-ew-screenplay .cm-scroller {
+  font-family: var(--ew-font-screenplay);
+}
+
+.cm-editor.cm-ew-screenplay .cm-content {
+  /* Screenplays are measured in pages; the page is 12pt Courier by rule. */
+  font-size: 12pt;
+}
+
+.cm-editor.cm-ew-screenplay .cm-ew-scr-scene-heading {
+  font-weight: 700;
+  text-transform: uppercase;
+  padding-top: 10px;
+}
+
+.cm-editor.cm-ew-screenplay .cm-ew-scr-character {
+  padding-left: 2.2in;
+}
+
+.cm-editor.cm-ew-screenplay .cm-ew-scr-dialogue {
+  padding-left: 1in;
+  padding-right: 2in;
+}
+
+.cm-editor.cm-ew-screenplay .cm-ew-scr-parenthetical {
+  padding-left: 1.6in;
+  color: var(--ew-ink-dim);
+}
+
+.cm-editor.cm-ew-screenplay .cm-ew-scr-transition {
+  text-align: right;
+}
+
+.cm-editor.cm-ew-screenplay .cm-ew-scr-song,
+.cm-editor.cm-ew-screenplay .cm-ew-scr-sound {
+  font-style: italic;
+  color: var(--ew-leaf);
+}
+
+.cm-editor.cm-ew-screenplay .cm-ew-screenplay-minutes {
+  padding: 2px var(--ew-space-3);
+  font-size: 11px;
+  color: var(--ew-ink-dim);
+  text-align: right;
+  background-color: var(--ew-surface-raised);
+  border-top: 1px solid var(--ew-border);
+  font-variant-numeric: tabular-nums;
+}

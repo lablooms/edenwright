@@ -1,0 +1,9 @@
+{
+  "id": "lablooms.screenplay-mode",
+  "name": "Screenplay Mode",
+  "version": "0.1.0-beta",
+  "minAppVersion": "0.1.0-beta",
+  "description": "Courier-page screenplay writing for screenplay projects: Tab cycles elements, Enter flows them, industry indents, and a running minute estimate.",
+  "author": "Lablooms Studio",
+  "authorUrl": "https://github.com/lablooms"
+}

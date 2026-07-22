@@ -1,0 +1,65 @@
+/* Sprints panel — token colors only (themes repaint everything). */
+.sprints-panel {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sprints-panel h3 {
+  margin: 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ew-ink);
+}
+.sprints-blurb {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ew-ink-dim);
+}
+.sprints-durations {
+  display: flex;
+  gap: 8px;
+}
+.sprints-start {
+  flex: 1;
+  padding: 8px 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ew-on-accent);
+  background: var(--ew-accent);
+  border: none;
+  border-radius: var(--ew-radius-sm);
+  cursor: pointer;
+}
+.sprints-start:hover {
+  background: var(--ew-accent-hover);
+}
+.sprints-clock {
+  margin: 0;
+  font-family: var(--ew-font-mono);
+  font-size: 40px;
+  text-align: center;
+  color: var(--ew-leaf);
+}
+.sprints-cancel {
+  padding: 6px 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--ew-ink-dim);
+  background: transparent;
+  border: 1px solid var(--ew-border);
+  border-radius: var(--ew-radius-sm);
+  cursor: pointer;
+}
+.sprints-cancel:hover {
+  color: var(--ew-ink);
+}
+.sprints-stats {
+  margin: 0;
+  font-size: 11px;
+  color: var(--ew-ink-dim);
+  text-align: center;
+}

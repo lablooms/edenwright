@@ -30,11 +30,14 @@ declare global {
 
   const window: Window;
 
-  /** The two DOM bits specs assert on (Node tsconfig has no DOM lib). */
+  /** The DOM bits specs assert on (Node tsconfig has no DOM lib). */
   function getComputedStyle(element: unknown): {
     getPropertyValue(name: string): string;
   };
-  const document: { documentElement: unknown };
+  const document: {
+    documentElement: unknown;
+    querySelector(selector: string): unknown;
+  };
 }
 
 export {};

@@ -1,0 +1,9 @@
+{
+  "id": "lablooms.story-canvas",
+  "name": "Story Canvas",
+  "version": "0.1.0-beta",
+  "minAppVersion": "0.1.0-beta",
+  "description": "The story-graph canvas over a project's graph.json: pan/zoom node layout, one prose file per node, and walk mode for proofreading routes.",
+  "author": "Lablooms Studio",
+  "authorUrl": "https://github.com/lablooms"
+}

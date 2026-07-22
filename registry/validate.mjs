@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-const ID_RE = /^[a-z0-9][a-z0-9-]*$/;
+const ID_RE = /^[a-z0-9][a-z0-9.-]*$/;
 const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const VERSION_RE = /^\d+\.\d+\.\d+(-[a-z0-9.-]+)?$/i;
 
@@ -38,7 +38,11 @@ async function validateFile(file, kind) {
   parsed.entries.forEach((entry, index) => {
     const where = `${file} entry ${index} (${entry?.id ?? "?"})`;
     if (typeof entry?.id !== "string" || !ID_RE.test(entry.id)) {
-      fail(file, index, "id must be kebab-case");
+      fail(
+        file,
+        index,
+        "id must be kebab-case (dots allowed for reverse-domain)",
+      );
     }
     if (seen.has(entry.id)) fail(file, index, `duplicate id "${entry.id}"`);
     seen.add(entry.id);

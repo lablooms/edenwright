@@ -1,0 +1,9 @@
+{
+  "id": "lablooms.stats-deluxe",
+  "name": "Stats Deluxe",
+  "version": "0.1.0-beta",
+  "minAppVersion": "0.1.0-beta",
+  "description": "Charts dashboard: writing pace, word heatmaps, per-entity screen time.",
+  "author": "Lablooms Studio",
+  "authorUrl": "https://github.com/lablooms"
+}

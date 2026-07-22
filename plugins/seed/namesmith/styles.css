@@ -1,0 +1,74 @@
+/* Namesmith panel — token colors only. */
+.namesmith-panel {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.namesmith-panel h3 {
+  margin: 0;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ew-ink);
+}
+.namesmith-cultures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.namesmith-culture {
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--ew-ink-dim);
+  background: transparent;
+  border: 1px solid var(--ew-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.namesmith-culture--active {
+  color: var(--ew-leaf);
+  border-color: var(--ew-leaf);
+}
+.namesmith-forge {
+  padding: 8px 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ew-on-accent);
+  background: var(--ew-accent);
+  border: none;
+  border-radius: var(--ew-radius-sm);
+  cursor: pointer;
+}
+.namesmith-forge:hover {
+  background: var(--ew-accent-hover);
+}
+.namesmith-names {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  columns: 2;
+}
+.namesmith-name {
+  width: 100%;
+  padding: 4px 6px;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  color: var(--ew-ink);
+  background: transparent;
+  border: none;
+  border-radius: var(--ew-radius-sm);
+  cursor: pointer;
+}
+.namesmith-name:hover {
+  background: var(--ew-surface-hover);
+  color: var(--ew-leaf);
+}
+.namesmith-hint {
+  margin: 0;
+  font-size: 11px;
+  color: var(--ew-ink-dim);
+}

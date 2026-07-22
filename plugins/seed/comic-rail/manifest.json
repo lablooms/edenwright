@@ -1,0 +1,9 @@
+{
+  "id": "lablooms.comic-rail",
+  "name": "Comic Rail",
+  "version": "0.1.0-beta",
+  "minAppVersion": "0.1.0-beta",
+  "description": "Page-flow rail for comic scripts: panel rhythm at a glance, storyboard and RTL toggles, plus PAGE/PANEL editor decorations.",
+  "author": "Lablooms Studio",
+  "authorUrl": "https://github.com/lablooms"
+}

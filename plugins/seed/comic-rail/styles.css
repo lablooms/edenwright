@@ -1,0 +1,111 @@
+/*
+ * Comic Rail styles — tokens only, never a hardcoded color (golden rule 4).
+ * Editor rules are scoped to the root class the CM extension adds to its own
+ * editor (`.ew-comic-editor`), because an enabled plugin's stylesheet is
+ * global: unscoped rules would leak into every other editor in the eden.
+ */
+
+/* — Comic script decorations (SPEC §8.2). — */
+
+.ew-comic-editor .cm-ew-comic-page {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-top: 2px solid var(--ew-leaf-deep);
+  padding-top: 10px;
+  margin-top: 10px;
+}
+.ew-comic-editor .cm-ew-comic-panel {
+  color: var(--ew-leaf);
+  font-weight: 600;
+  padding-top: 6px;
+}
+.ew-comic-editor .cm-ew-comic-label {
+  color: var(--ew-ink-dim);
+  font-size: 0.86em;
+}
+
+/* — Page-flow rail. — */
+
+.ew-flow-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ew-space-3);
+}
+.ew-flow-rail__toggles {
+  display: flex;
+  gap: var(--ew-space-2);
+}
+.ew-flow-rail__toggles button {
+  padding: 2px var(--ew-space-2);
+  font-size: 11px;
+  border-radius: 999px;
+  color: var(--ew-ink-dim);
+  border: 1px solid var(--ew-border);
+  background: none;
+  cursor: pointer;
+}
+.ew-flow-rail__toggles button[data-active] {
+  background: var(--ew-accent-tint);
+  color: var(--ew-leaf);
+  border-color: transparent;
+}
+.ew-flow-rail__empty {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ew-ink-dim);
+}
+.ew-flow-rail__page {
+  padding: var(--ew-space-2);
+  border: 1px solid var(--ew-border);
+  border-radius: var(--ew-radius-sm);
+}
+.ew-flow-rail__page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: var(--ew-space-2);
+}
+.ew-flow-rail__count {
+  font-size: 10px;
+  color: var(--ew-ink-dim);
+  font-weight: 400;
+}
+.ew-flow-rail__panels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ew-space-1);
+}
+.ew-flow-rail__chip {
+  min-width: 22px;
+  text-align: center;
+  padding: 1px var(--ew-space-1);
+  font-size: 10px;
+  border-radius: var(--ew-radius-sm);
+  background: var(--ew-accent-tint);
+  color: var(--ew-leaf);
+}
+.ew-flow-rail__thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 60px;
+  border: 1px dashed var(--ew-border-strong);
+  border-radius: 2px;
+  background: var(--ew-surface-hover);
+}
+.ew-flow-rail__thumb-num {
+  font-size: 11px;
+  color: var(--ew-ink-dim);
+}
+.ew-flow-rail__tease {
+  margin: var(--ew-space-2) 0 0;
+  font-size: 11px;
+  color: var(--ew-ink-dim);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}

@@ -1,0 +1,9 @@
+{
+  "id": "lablooms.hello-eden",
+  "name": "Hello, eden",
+  "version": "1.0.0",
+  "minAppVersion": "0.1.0-beta",
+  "description": "The plugin developers copy to start — adds a command and a panel.",
+  "author": "Lablooms Studio",
+  "authorUrl": "https://github.com/lablooms"
+}
