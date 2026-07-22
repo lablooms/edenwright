@@ -47,6 +47,22 @@
   border-bottom: 1px solid var(--ew-border);
 }
 
+.codex-panel__filter {
+  margin: 0 var(--ew-space-3) var(--ew-space-2);
+  padding: var(--ew-space-2) var(--ew-space-3);
+  font: inherit;
+  font-size: 12px;
+  color: var(--ew-ink);
+  background: var(--ew-void);
+  border: 1px solid var(--ew-border);
+  border-radius: var(--ew-radius-sm);
+  outline: none;
+}
+
+.codex-panel__filter:focus {
+  border-color: var(--ew-focus-ring);
+}
+
 .codex-panel__select,
 .codex-panel__name {
   padding: var(--ew-space-2) var(--ew-space-3);

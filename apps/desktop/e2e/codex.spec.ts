@@ -150,4 +150,49 @@ test.describe("M5 — Codex sheets & appearances", () => {
     );
     expect(placeOnDisk).toContain("type: place");
   });
+
+  test("@-completion stays open from the first letter (W1)", async () => {
+    await page.evaluate(async () => {
+      await window.edenwright.files.write(
+        "Projects/Hollow Crown/manuscript/completion probe.md",
+        "The fox ran. ",
+        null,
+      );
+      await window.__ewStores.app
+        .getState()
+        .openFileAt("Projects/Hollow Crown/manuscript/completion probe.md");
+    });
+    await expect(page.locator(".markdown-editor")).toBeVisible();
+    await page.locator(".markdown-editor .cm-content").click();
+    await page.keyboard.press("Control+End");
+    await page.keyboard.type("@");
+    await expect(page.locator(".cm-tooltip-autocomplete")).toBeVisible({
+      timeout: 5000,
+    });
+    // The founder's bug: one letter used to close the tooltip (CM only
+    // matches 1-char queries at a label's first character — our labels
+    // started with "@").
+    await page.keyboard.type("y");
+    await expect(page.locator(".cm-tooltip-autocomplete")).toBeVisible({
+      timeout: 5000,
+    });
+    await expect(
+      page.locator(".cm-tooltip-autocomplete li").first(),
+    ).toContainText("@yuki");
+  });
+
+  test("codex panel filter narrows by name and alias", async () => {
+    await page.locator('.ew-sidebar button[aria-label="Codex"]').click();
+    await expect(page.locator(".codex-panel__filter")).toBeVisible();
+    await page.locator(".codex-panel__filter").fill("gray fox");
+    await expect(page.locator(".codex-panel__entity-name")).toHaveCount(1);
+    await expect(page.locator(".codex-panel__entity-name")).toContainText(
+      "Yuki Harrow",
+    );
+    await page.locator(".codex-panel__filter").fill("nobody");
+    await expect(page.locator(".codex-panel__entity-name")).toHaveCount(0);
+    await expect(page.locator(".codex-panel")).toContainText(
+      "Nothing named “nobody” grows here.",
+    );
+  });
 });

@@ -16,6 +16,7 @@ export function CodexPanel() {
   const openFile = useAppStore((state) => state.openFile);
   const projects = useAppStore((state) => state.projects);
   const worlds = useAppStore((state) => state.worlds);
+  const tree = useAppStore((state) => state.tree);
   const toast = useAppStore((state) => state.toast);
 
   const [entities, setEntities] = useState<EntitySummary[]>([]);
@@ -23,40 +24,60 @@ export function CodexPanel() {
   const [newType, setNewType] = useState("character");
   const [newName, setNewName] = useState("");
   const [container, setContainer] = useState("");
+  const [filter, setFilter] = useState("");
 
   const refresh = () => {
     void window.edenwright.query.entities().then(setEntities);
   };
-  useEffect(refresh, [openFile?.path]);
+  // Follow the tree: files created/moved elsewhere show up here live.
+  useEffect(refresh, [openFile?.path, tree]);
 
   const containers = useMemo(
     () => [
-      ...worlds.map((world) => ({
-        id: `Worlds/${world.name}/codex`,
-        label: `${world.name} (world)`,
-      })),
       ...projects.map((project) => ({
         id: `Projects/${project.name}/codex`,
         label: project.name,
+      })),
+      ...worlds.map((world) => ({
+        id: `Worlds/${world.name}/codex`,
+        label: `${world.name} (world)`,
       })),
     ],
     [worlds, projects],
   );
 
+  // New entities default to the project you're in, not the first world.
+  const defaultContainer = useMemo(() => {
+    const segments = openFile?.path.split("/") ?? [];
+    if (segments[0] === "Projects" && segments[1]) {
+      const id = `Projects/${segments[1]}/codex`;
+      if (containers.some((item) => item.id === id)) return id;
+    }
+    return containers[0]?.id ?? "";
+  }, [openFile?.path, containers]);
+
   const grouped = useMemo(() => {
+    const needle = filter.trim().toLowerCase();
     const map = new Map<string, EntitySummary[]>();
     for (const entity of entities) {
+      if (
+        needle &&
+        !entity.name.toLowerCase().includes(needle) &&
+        !entity.aliases.some((alias) => alias.toLowerCase().includes(needle))
+      ) {
+        continue;
+      }
       const type = entity.entityType ?? "character";
       const list = map.get(type) ?? [];
       list.push(entity);
       map.set(type, list);
     }
     return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [entities]);
+  }, [entities, filter]);
 
   const createEntity = async () => {
     const name = newName.trim();
-    const dir = container || containers[0]?.id;
+    const dir = container || defaultContainer;
     if (!name || !dir) return;
     const typeDef =
       BUILTIN_ENTITY_TYPES.find((item) => item.type === newType) ??
@@ -79,21 +100,31 @@ export function CodexPanel() {
     <div className="codex-panel">
       <div className="codex-panel__header">
         <span className="codex-panel__label">Codex</span>
-        <button
-          type="button"
-          className="codex-panel__new"
-          title="New entity"
-          onClick={() => setCreating((value) => !value)}
-        >
-          <Icon icon={Plus} size={15} />
-        </button>
+        {containers.length > 0 ? (
+          <button
+            type="button"
+            className="codex-panel__new"
+            title="New entity"
+            onClick={() => setCreating((value) => !value)}
+          >
+            <Icon icon={Plus} size={15} />
+          </button>
+        ) : null}
       </div>
+
+      <input
+        type="search"
+        className="codex-panel__filter"
+        placeholder="Filter entities…"
+        value={filter}
+        onChange={(event) => setFilter(event.target.value)}
+      />
 
       {creating ? (
         <div className="codex-panel__create">
           <select
             className="codex-panel__select"
-            value={container || containers[0]?.id || ""}
+            value={container || defaultContainer}
             onChange={(event) => setContainer(event.target.value)}
           >
             {containers.map((item) => (
@@ -132,8 +163,14 @@ export function CodexPanel() {
       <div className="codex-panel__list">
         {entities.length === 0 && !creating ? (
           <p className="codex-panel__empty">
-            No entities yet — the codex is where your cast, places, and lore
-            live. Make one with the + button.
+            {containers.length === 0
+              ? "The codex is where your cast, places, and lore live — make a project first, then plant entities with the + button."
+              : "No entities yet — the codex is where your cast, places, and lore live. Make one with the + button."}
+          </p>
+        ) : null}
+        {entities.length > 0 && grouped.length === 0 ? (
+          <p className="codex-panel__empty">
+            Nothing named “{filter}” grows here.
           </p>
         ) : null}
         {grouped.map(([type, items]) => {

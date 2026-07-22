@@ -40,12 +40,14 @@ export function mentionCompletion(
       from: match.from + match.text.indexOf("@") + 1,
       options: entities.map((entity) => {
         const key = entity.name.split(/\s+/)[0].toLowerCase();
-        // Linked worlds' entities are badged with their world (§7.5).
+        // Label must not start with "@" — CM's FuzzyMatcher only matches
+        // 1-char queries at a label's first character, and every writer
+        // types "@y" first. The @ moves to detail; apply still inserts key.
         const badge = entity.world ? `${entity.world} · ` : "";
         const kind = entity.entityType ?? "";
         return {
-          label: `@${key}`,
-          detail: `${entity.name}${kind || badge ? ` · ${badge}${kind}` : ""}`,
+          label: key,
+          detail: `@${key} · ${entity.name}${kind || badge ? ` · ${badge}${kind}` : ""}`,
           type: "constant",
           apply: key,
         };
