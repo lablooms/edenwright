@@ -131,6 +131,8 @@ export interface AppApi {
   version(): Promise<string>;
   /** Open an https URL in the system browser (update check's only link). */
   openExternal(url: string): Promise<void>;
+  /** Read a bundled first-party seed file (plugins/seed/, themes/ only). */
+  readBundled(relPath: string): Promise<string>;
 }
 
 export interface HistoryApi {

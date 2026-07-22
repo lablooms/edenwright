@@ -12,6 +12,7 @@ import type { ElectronDialogAdapter } from "./adapters/electron-dialogs.js";
 import type { NodeFileSystemAdapter } from "./adapters/node-file-system.js";
 import type { ElectronShellAdapter } from "./adapters/electron-shell.js";
 import { renderPdfToFile } from "./pdf-renderer.js";
+import { readBundled } from "./bundle-reader.js";
 
 const isTest = process.env.EDENWRIGHT_TEST === "1";
 
@@ -151,6 +152,10 @@ export function registerEdenIpc(
     if (typeof url !== "string" || !url.startsWith("https://")) return;
     return shell.openExternal(url);
   });
+
+  ipcMain.handle("app:read-bundled", (_event, relPath: string) =>
+    readBundled(relPath),
+  );
 
   ipcMain.handle("pluginfs:stat", (_event, relPath: string) =>
     service.pluginfsStat(relPath),

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,32 +12,8 @@ import {
 } from "@playwright/test";
 
 const appRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-const themesRoot = join(appRoot, "..", "..", "themes");
 
-// Theme release assets come from local theme packages (v2 seeds aren't
-// published yet) — the install path itself runs for real.
-async function stubThemeAssets(page: Page) {
-  await page.route(
-    "https://github.com/**/releases/download/theme-*/**",
-    (route) => {
-      void (async () => {
-        const url = route.request().url();
-        const fileName = url.slice(url.lastIndexOf("/") + 1);
-        const themeMatch = /theme-([a-z-]+)-v/.exec(url);
-        try {
-          const body = await readFile(
-            join(themesRoot, themeMatch?.[1] ?? "", fileName),
-            "utf8",
-          );
-          await route.fulfill({ status: 200, body });
-        } catch {
-          await route.fulfill({ status: 404, body: "no such asset" });
-        }
-      })();
-    },
-  );
-}
-
+// Seed themes install from the app bundle — no network, no stubs (W2).
 test.describe("P4 — Themes (v2)", () => {
   let sandbox: string;
   let app: ElectronApplication;
@@ -51,7 +27,6 @@ test.describe("P4 — Themes (v2)", () => {
       env: { ...process.env, EDENWRIGHT_TEST: "1" },
     });
     page = await app.firstWindow();
-    await stubThemeAssets(page);
 
     await page.evaluate(
       (parent) => window.edenwright.eden.create(parent, "P4T Eden"),

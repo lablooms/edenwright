@@ -8,7 +8,8 @@
       "description": "Courier Prime, element inference, Tab cycling, minute estimate — for screenplay-medium projects.",
       "author": "Lablooms Studio",
       "repo": "lablooms/edenwright",
-      "releaseTag": "seed-screenplay-mode-v0.1.0"
+      "releaseTag": "seed-screenplay-mode-v0.1.0",
+      "bundled": "plugins/seed/screenplay-mode"
     },
     {
       "id": "lablooms.comic-rail",
@@ -17,7 +18,8 @@
       "description": "PAGE/PANEL structure aids and a page-flow rail showing panel rhythm — for comic-medium projects.",
       "author": "Lablooms Studio",
       "repo": "lablooms/edenwright",
-      "releaseTag": "seed-comic-rail-v0.1.0"
+      "releaseTag": "seed-comic-rail-v0.1.0",
+      "bundled": "plugins/seed/comic-rail"
     },
     {
       "id": "lablooms.story-canvas",
@@ -26,7 +28,8 @@
       "description": "A node canvas over graph.json with a walk mode — for interactive-medium projects.",
       "author": "Lablooms Studio",
       "repo": "lablooms/edenwright",
-      "releaseTag": "seed-story-canvas-v0.1.0"
+      "releaseTag": "seed-story-canvas-v0.1.0",
+      "bundled": "plugins/seed/story-canvas"
     },
     {
       "id": "lablooms.medium-exporters",
@@ -35,7 +38,8 @@
       "description": "Fountain, Final Draft FDX, screenplay PDF, comic script, Ren'Py, Twee — medium serializations.",
       "author": "Lablooms Studio",
       "repo": "lablooms/edenwright",
-      "releaseTag": "seed-medium-exporters-v0.1.0"
+      "releaseTag": "seed-medium-exporters-v0.1.0",
+      "bundled": "plugins/seed/medium-exporters"
     },
     {
       "id": "lablooms.structure-wizards",
@@ -44,7 +48,8 @@
       "description": "Guided outline generators — Snowflake, Save the Cat, Hero's Journey — that scaffold a project's tree.",
       "author": "Lablooms Studio",
       "repo": "lablooms/edenwright",
-      "releaseTag": "seed-structure-wizards-v0.1.0"
+      "releaseTag": "seed-structure-wizards-v0.1.0",
+      "bundled": "plugins/seed/structure-wizards"
     },
     {
       "id": "lablooms.sprints",
@@ -53,7 +58,8 @@
       "description": "A writing-sprint timer with session stats — words per sprint, best streak, today's totals.",
       "author": "Lablooms Studio",
       "repo": "lablooms/edenwright",
-      "releaseTag": "seed-sprints-v0.1.0"
+      "releaseTag": "seed-sprints-v0.1.0",
+      "bundled": "plugins/seed/sprints"
     },
     {
       "id": "lablooms.namesmith",
@@ -62,7 +68,8 @@
       "description": "A name generator with seeded culture and style lists. No network, all forge.",
       "author": "Lablooms Studio",
       "repo": "lablooms/edenwright",
-      "releaseTag": "seed-namesmith-v0.1.0"
+      "releaseTag": "seed-namesmith-v0.1.0",
+      "bundled": "plugins/seed/namesmith"
     },
     {
       "id": "lablooms.stats-deluxe",
@@ -71,7 +78,8 @@
       "description": "Charts dashboard: writing pace, word heatmaps, per-entity screen time.",
       "author": "Lablooms Studio",
       "repo": "lablooms/edenwright",
-      "releaseTag": "seed-stats-deluxe-v0.1.0"
+      "releaseTag": "seed-stats-deluxe-v0.1.0",
+      "bundled": "plugins/seed/stats-deluxe"
     }
   ]
 }

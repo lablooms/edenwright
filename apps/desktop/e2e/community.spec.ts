@@ -12,18 +12,21 @@ import {
 } from "@playwright/test";
 
 const appRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-const seedsRoot = join(appRoot, "..", "..", "plugins", "seed");
 const registryRoot = join(appRoot, "..", "..", "registry");
 
-/**
- * Community installs download release assets from GitHub. The v2 seeds
- * aren't published yet (nothing pushes before the founder reviews), so the
- * spec serves those URLs from the local seed folders — the whole install
- * path (fetch → validate → write → enable → load) runs for real. The
- * registry index itself is stubbed with the v2 fixture (the live registry
- * repo still carries v1 entries until the push).
- */
-async function stubReleaseAssets(page: Page) {
+// A fake THIRD-party plugin: its install must take the release-download
+// path (bundled first-party seeds install offline, no stub needed).
+const THIRD_PARTY = {
+  id: "someone.echo-garden",
+  name: "Echo Garden",
+  version: "0.1.0",
+  description: "A third-party test plugin — says hello.",
+  author: "Someone Else",
+  repo: "someone/echo-garden",
+  releaseTag: "v0.1.0",
+};
+
+async function stubThirdParty(page: Page) {
   await page.route("https://raw.githubusercontent.com/**", (route) => {
     void (async () => {
       const url = route.request().url();
@@ -36,10 +39,13 @@ async function stubReleaseAssets(page: Page) {
         await route.fulfill({ status: 404, body: "not found" });
         return;
       }
-      const body = await readFile(join(registryRoot, file), "utf8");
+      const parsed = JSON.parse(
+        await readFile(join(registryRoot, file), "utf8"),
+      ) as { entries: unknown[] };
+      if (file === "community-plugins.json") parsed.entries.push(THIRD_PARTY);
       await route.fulfill({
         status: 200,
-        body,
+        body: JSON.stringify(parsed),
         contentType: "application/json",
       });
     })();
@@ -48,22 +54,26 @@ async function stubReleaseAssets(page: Page) {
     void (async () => {
       const url = route.request().url();
       const fileName = url.slice(url.lastIndexOf("/") + 1);
-      const pluginMatch = /seed-([a-z-]+)-v/.exec(url);
-      if (
-        pluginMatch &&
-        ["manifest.json", "main.js", "styles.css"].includes(fileName)
-      ) {
-        try {
-          const body = await readFile(
-            join(seedsRoot, pluginMatch[1], fileName),
-            "utf8",
-          );
-          await route.fulfill({ status: 200, body });
-          return;
-        } catch {
-          await route.fulfill({ status: 404, body: "no such asset" });
-          return;
-        }
+      if (fileName === "manifest.json") {
+        await route.fulfill({
+          status: 200,
+          body: JSON.stringify({
+            id: THIRD_PARTY.id,
+            name: THIRD_PARTY.name,
+            version: THIRD_PARTY.version,
+            minAppVersion: "0.1.0-beta",
+            description: THIRD_PARTY.description,
+            author: THIRD_PARTY.author,
+          }),
+        });
+        return;
+      }
+      if (fileName === "main.js") {
+        await route.fulfill({
+          status: 200,
+          body: 'const { definePlugin } = require("@edenwright/plugin-api");\nmodule.exports = definePlugin({ manifest: require("./manifest.json"), onload(ctx) { ctx.commands.register({ id: "echo-garden:hello", name: "Echo hello", callback: () => ctx.notices.show("Echo from the garden.") }); } });\n',
+        });
+        return;
       }
       await route.fulfill({ status: 404, body: "no such asset" });
     })();
@@ -83,7 +93,7 @@ test.describe("P4 — Community plugins (v2 seeds)", () => {
       env: { ...process.env, EDENWRIGHT_TEST: "1" },
     });
     page = await app.firstWindow();
-    await stubReleaseAssets(page);
+    await stubThirdParty(page);
 
     await page.evaluate(
       (parent) => window.edenwright.eden.create(parent, "P4 Eden"),
@@ -209,5 +219,38 @@ test.describe("P4 — Community plugins (v2 seeds)", () => {
       "utf8",
     );
     expect(fountain).toContain("INT. ATTIC STUDIO - DAY");
+    await page
+      .locator(".export-modal__actions button", { hasText: "Done" })
+      .click();
+  });
+
+  test("third-party plugin installs via release download (stubbed)", async () => {
+    await page.locator('.ew-sidebar button[aria-label="Plugins"]').click();
+    const card = page.locator(".ew-community__card", {
+      hasText: "Echo Garden",
+    });
+    await expect(card).toBeVisible({ timeout: 15000 });
+    await card.locator(".ew-community__install").click();
+    await expect(page.locator(".ew-modal")).toBeVisible({ timeout: 15000 });
+    await page
+      .locator(".ew-modal button", { hasText: "Enable plugin" })
+      .click();
+    await expect(card.locator(".ew-community__installed")).toBeVisible({
+      timeout: 15000,
+    });
+    await page
+      .locator(".settings__footer button", { hasText: "Close" })
+      .click();
+
+    // Its command registered through the real download → enable → load path.
+    await page.keyboard.press("Control+p");
+    await page.locator(".palette__input").fill("Echo hello");
+    await expect(
+      page.locator(".palette__row", { hasText: "Echo hello" }),
+    ).toBeVisible({ timeout: 5000 });
+    await page.keyboard.press("Enter");
+    await expect(
+      page.locator(".ew-toast", { hasText: "Echo from the garden." }),
+    ).toBeVisible();
   });
 });

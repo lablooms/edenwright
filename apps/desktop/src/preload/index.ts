@@ -122,6 +122,7 @@ const api: EdenwrightApi = {
     revealPath: (relPath) => ipcRenderer.invoke("app:reveal-path", relPath),
     version: () => ipcRenderer.invoke("app:version"),
     openExternal: (url) => ipcRenderer.invoke("app:open-external", url),
+    readBundled: (relPath) => ipcRenderer.invoke("app:read-bundled", relPath),
   },
 };
 

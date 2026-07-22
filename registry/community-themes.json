@@ -8,7 +8,8 @@
       "description": "A leaf-green light theme — warm paper, deep violet ink, the same garden by daylight.",
       "author": "Lablooms Studio",
       "repo": "lablooms/edenwright",
-      "releaseTag": "theme-edenwright-light-v0.1.0"
+      "releaseTag": "theme-edenwright-light-v0.1.0",
+      "bundled": "themes/edenwright-light"
     },
     {
       "id": "edenwright-quiet",
@@ -17,7 +18,8 @@
       "description": "A low-saturation dark theme — the void with the volume turned down, for long quiet nights.",
       "author": "Lablooms Studio",
       "repo": "lablooms/edenwright",
-      "releaseTag": "theme-edenwright-quiet-v0.1.0"
+      "releaseTag": "theme-edenwright-quiet-v0.1.0",
+      "bundled": "themes/edenwright-quiet"
     }
   ]
 }

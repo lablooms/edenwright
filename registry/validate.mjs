@@ -5,6 +5,7 @@
  * repo/version/URLs. Runs in CI on every change to registry/. No deps.
  */
 import { readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -59,6 +60,19 @@ async function validateFile(file, kind) {
     }
     if (typeof entry.releaseTag !== "string" || entry.releaseTag.length === 0) {
       fail(file, index, "releaseTag is required (release assets ship there)");
+    }
+    if (entry.bundled !== undefined) {
+      // First-party seeds ship inside the app; bundled installs work offline.
+      if (
+        typeof entry.bundled !== "string" ||
+        !/^(plugins\/seed|themes)\/[a-z0-9-]+$/.test(entry.bundled)
+      ) {
+        fail(file, index, "bundled must be plugins/seed/<id> or themes/<id>");
+      } else if (
+        !existsSync(join(here, "..", entry.bundled, "manifest.json"))
+      ) {
+        fail(file, index, `bundled path ${entry.bundled} has no manifest.json`);
+      }
     }
     if (entry.screenshots !== undefined) {
       if (

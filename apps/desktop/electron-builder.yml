@@ -20,6 +20,14 @@ asar: true
 asarUnpack:
   - "**/*.node"
 
+# First-party seeds ship inside the app (SPEC v2 §7): the community tab's
+# bundled installs work offline, no release download needed.
+extraResources:
+  - from: "../../plugins"
+    to: "bundle/plugins"
+  - from: "../../themes"
+    to: "bundle/themes"
+
 # ensure-sqlite.mjs already fetched the correct Electron-ABI prebuilt;
 # rebuilding native modules at package time is redundant (and toolchainless
 # dev machines can't). CI runners could, but they don't need to.

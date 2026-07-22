@@ -18,6 +18,11 @@ export interface RegistryEntry {
   repo: string;
   /** Tag of the release holding manifest.json + payload assets. */
   releaseTag: string;
+  /**
+   * First-party seeds ship inside the app — bundled installs work offline
+   * and always win over remote entries with the same id.
+   */
+  bundled?: string;
   screenshots?: string[];
 }
 
@@ -53,12 +58,18 @@ async function fetchJson(url: string): Promise<unknown> {
 export async function fetchRegistry(
   kind: RegistryKind,
 ): Promise<RegistryResult> {
+  const bundled = FIXTURES[kind].entries.filter((entry) => entry.bundled);
   try {
     const raw = (await fetchJson(
       `${REGISTRY_BASE}/community-${kind}.json`,
     )) as { entries?: RegistryEntry[] };
     if (!Array.isArray(raw.entries)) throw new Error("bad registry shape");
-    return { entries: raw.entries, source: "remote" };
+    // Bundled first-party wins by id — a stale remote can't shadow seeds
+    // the app already carries.
+    const remote = raw.entries.filter(
+      (entry) => !bundled.some((local) => local.id === entry.id),
+    );
+    return { entries: [...bundled, ...remote], source: "remote" };
   } catch {
     return { entries: FIXTURES[kind].entries, source: "fixture" };
   }

@@ -5,10 +5,12 @@ import { useAppStore } from "../store";
 import { usePluginStore } from "../plugins/plugin-store";
 import { pluginRuntime } from "../plugins/runtime";
 import { useThemeStore } from "../themes/theme-store";
-import { downloadPluginFiles } from "../community/community-install";
+import {
+  downloadPluginFiles,
+  readEntryAsset,
+} from "../community/community-install";
 import {
   compareVersions,
-  fetchAssetText,
   fetchRegistry,
   type RegistryEntry,
   type RegistryResult,
@@ -68,8 +70,8 @@ export function CommunitySection({ kind }: { kind: "plugins" | "themes" }) {
 
   const installTheme = async (entry: RegistryEntry) => {
     const store = useThemeStore.getState();
-    const manifestText = await fetchAssetText(entry, "manifest.json");
-    const css = await fetchAssetText(entry, "theme.css");
+    const manifestText = await readEntryAsset(entry, "manifest.json");
+    const css = await readEntryAsset(entry, "theme.css");
     if (installedVersions.has(entry.id)) await store.remove(entry.id);
     await store.install(entry.id, manifestText, css);
     await store.apply(entry.id);
