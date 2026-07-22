@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "edenwright-light",
+      "name": "Edenwright Light",
+      "version": "0.1.0-beta",
+      "description": "A leaf-green light theme — warm paper, deep violet ink, the same garden by daylight.",
+      "author": "Lablooms Studio",
+      "repo": "lablooms/edenwright",
+      "releaseTag": "theme-edenwright-light-v0.1.0"
+    },
+    {
+      "id": "edenwright-quiet",
+      "name": "Edenwright Quiet",
+      "version": "0.1.0-beta",
+      "description": "A low-saturation dark theme — the void with the volume turned down, for long quiet nights.",
+      "author": "Lablooms Studio",
+      "repo": "lablooms/edenwright",
+      "releaseTag": "theme-edenwright-quiet-v0.1.0"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+# Golden fixtures compare byte-exact against generator output — never let
+# line-ending conversion touch them (Windows autocrlf broke them once).
+packages/exporters/src/golden/** -text
+# Theme packages ride the registry as-is; keep their bytes stable too.
+themes/**/theme.css -text

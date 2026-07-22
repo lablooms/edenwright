@@ -1,0 +1,116 @@
+.palette-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  background: var(--ew-scrim);
+  animation: ew-fade-in var(--ew-motion-fast) var(--ew-ease-out);
+}
+
+.palette {
+  display: flex;
+  flex-direction: column;
+  width: min(560px, calc(100vw - 64px));
+  max-height: 60vh;
+  background: var(--ew-surface-raised);
+  border: 1px solid var(--ew-border-strong);
+  border-radius: var(--ew-radius-lg);
+  box-shadow: 0 16px 48px var(--ew-scrim);
+  overflow: hidden;
+  animation: ew-pop-in var(--ew-motion-base) var(--ew-ease-out);
+}
+
+.palette__input {
+  padding: var(--ew-space-3) var(--ew-space-4);
+  font: inherit;
+  font-size: 15px;
+  color: var(--ew-ink);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--ew-border);
+  outline: none;
+}
+
+.palette__input::placeholder {
+  color: var(--ew-ink-dim);
+}
+
+.palette__list {
+  overflow: auto;
+  padding: var(--ew-space-2);
+}
+
+.palette__empty {
+  margin: var(--ew-space-4);
+  color: var(--ew-ink-dim);
+  font-size: 13px;
+  text-align: center;
+}
+
+.palette__section {
+  padding: var(--ew-space-2) var(--ew-space-3) var(--ew-space-1);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ew-ink-dim);
+}
+
+.palette__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ew-space-3);
+  width: 100%;
+  padding: var(--ew-space-2) var(--ew-space-3);
+  border-radius: var(--ew-radius-sm);
+  text-align: left;
+}
+
+.palette__row[data-selected] {
+  background: var(--ew-accent-tint);
+}
+
+.palette__label {
+  color: var(--ew-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette__row[data-selected] .palette__label {
+  color: var(--ew-leaf);
+}
+
+.palette__detail {
+  margin-left: auto;
+  flex: none;
+  font-size: 12px;
+  color: var(--ew-ink-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 55%;
+}
+
+@keyframes ew-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ew-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

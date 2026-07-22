@@ -1,0 +1,40 @@
+.ew-panel-layout {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+}
+
+.ew-panel-layout__side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--ew-surface-raised);
+  border-right: 1px solid var(--ew-border);
+  overflow: hidden;
+}
+
+.ew-panel-layout__main {
+  flex: 1;
+  min-width: 0;
+  background: var(--ew-void);
+  overflow: auto;
+}
+
+.ew-panel-layout__resizer {
+  width: 5px;
+  margin-left: -1px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background-color var(--ew-motion-fast) var(--ew-ease-out);
+}
+
+.ew-panel-layout__resizer:hover,
+.ew-panel-layout__resizer:active {
+  background: var(--ew-accent-tint);
+}
+
+.ew-panel-layout__panel {
+  background: var(--ew-surface-raised);
+  border-left: 1px solid var(--ew-border);
+  overflow: auto;
+}

@@ -1,0 +1,65 @@
+/**
+ * Edenwright design tokens (SPEC §3.1). Every color in the app comes from
+ * these custom properties — themes (SPEC §9.5) are packs that override them.
+ * Derived neutrals come from ink/abyss/void via color-mix transparency
+ * layers, never new grays (§3.1 rules).
+ */
+
+:root {
+  /* Signature palette */
+  --ew-leaf: #3ae98d;
+  --ew-leaf-bright: #8ff5c2;
+  --ew-leaf-deep: #10a35c;
+  --ew-abyss: #1e1136;
+  --ew-void: #0b0713;
+  --ew-ink: #ede7f6;
+  --ew-ink-dim: #9c93b8;
+
+  /* Derived surfaces & lines (transparency over the palette, §3.1) */
+  --ew-surface-raised: var(--ew-abyss);
+  --ew-surface-hover: color-mix(in srgb, var(--ew-ink) 6%, transparent);
+  --ew-surface-active: color-mix(in srgb, var(--ew-ink) 10%, transparent);
+  --ew-border: color-mix(in srgb, var(--ew-ink) 10%, transparent);
+  --ew-border-strong: color-mix(in srgb, var(--ew-ink) 18%, transparent);
+  --ew-scrim: color-mix(in srgb, var(--ew-void) 72%, transparent);
+
+  /* Accent interactions */
+  --ew-accent: var(--ew-leaf);
+  --ew-accent-hover: var(--ew-leaf-bright);
+  --ew-accent-pressed: var(--ew-leaf-deep);
+  --ew-accent-tint: color-mix(in srgb, var(--ew-leaf) 14%, transparent);
+  --ew-on-accent: var(--ew-void);
+  --ew-focus-ring: var(--ew-leaf);
+  --ew-selection: color-mix(in srgb, var(--ew-leaf) 26%, transparent);
+
+  /* Typography (families bundled via @fontsource, §3.2) */
+  --ew-font-ui: "Space Grotesk", system-ui, sans-serif;
+  --ew-font-editor: "Literata", Georgia, serif;
+  --ew-font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --ew-font-screenplay: "Courier Prime", "Courier New", monospace;
+
+  /* 4-px spacing grid (§11) */
+  --ew-space-1: 4px;
+  --ew-space-2: 8px;
+  --ew-space-3: 12px;
+  --ew-space-4: 16px;
+  --ew-space-6: 24px;
+  --ew-space-8: 32px;
+  --ew-space-12: 48px;
+
+  /* Motion — subtle and fast, ≤180 ms ease-out (§11) */
+  --ew-motion-fast: 120ms;
+  --ew-motion-base: 180ms;
+  --ew-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Shape */
+  --ew-radius-sm: 6px;
+  --ew-radius-md: 10px;
+  --ew-radius-lg: 14px;
+
+  /* Chrome metrics */
+  --ew-titlebar-height: 40px;
+  --ew-activitybar-width: 52px;
+  --ew-panel-min: 200px;
+  --ew-panel-max: 480px;
+}

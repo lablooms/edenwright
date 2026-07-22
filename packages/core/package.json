@@ -1,0 +1,28 @@
+{
+  "name": "@edenwright/core",
+  "version": "0.1.0-beta",
+  "description": "Edenwright portable core: eden model, file model, settings, and platform adapter interfaces. Pure TypeScript — no Electron, Node, or DOM-storage APIs (SPEC §5.3).",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/in-memory-fs.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "yaml": "^2.9.0"
+  }
+}

@@ -1,0 +1,19 @@
+/**
+ * Edenwright Light (SPEC §9.6): the leaf-green light theme. Overrides the
+ * §3.1 signature palette only — every derived surface, border, and tint
+ * recomputes from these via the base tokens' color-mix layers.
+ */
+
+:root {
+  /* Signature palette, daylight */
+  --ew-leaf: #0e9f5d;
+  --ew-leaf-bright: #0b8750;
+  --ew-leaf-deep: #6fdcae;
+  --ew-abyss: #f0ece1;
+  --ew-void: #faf8f1;
+  --ew-ink: #251b3d;
+  --ew-ink-dim: #6e6584;
+
+  /* On light paper the accent carries white text, not void. */
+  --ew-on-accent: #faf8f1;
+}

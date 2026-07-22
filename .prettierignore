@@ -1,0 +1,11 @@
+node_modules
+dist
+out
+release
+coverage
+build
+pnpm-lock.yaml
+CHANGELOG.md
+SPEC.md
+packages/exporters/src/golden
+docs/plugins/api

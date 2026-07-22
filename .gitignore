@@ -1,0 +1,14 @@
+node_modules/
+dist/
+out/
+release/
+coverage/
+apps/desktop/build/
+test-results/
+apps/desktop/e2e/artifacts/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example

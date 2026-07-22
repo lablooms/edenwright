@@ -1,0 +1,39 @@
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 26px;
+  padding: 0 var(--ew-space-3);
+  background: var(--ew-void);
+  border-top: 1px solid var(--ew-border);
+  font-size: 11px;
+  color: var(--ew-ink-dim);
+  -webkit-app-region: no-drag;
+}
+
+.status-bar__left,
+.status-bar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--ew-space-2);
+  min-width: 0;
+}
+
+.status-bar__item {
+  padding: 2px var(--ew-space-2);
+  border-radius: var(--ew-radius-sm);
+  color: var(--ew-ink-dim);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-bar__item[data-clickable]:hover {
+  background: var(--ew-surface-hover);
+  color: var(--ew-ink);
+}
+
+.status-bar__indexing {
+  font-variant-numeric: tabular-nums;
+}

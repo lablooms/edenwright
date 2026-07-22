@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  check:
+    name: Lint, typecheck, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (includes the Portable Core Law rule)
+        run: pnpm lint
+
+      - name: Registry validation (SPEC §9.4)
+        run: node registry/validate.mjs
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+  build:
+    name: Build, smoke test & package (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Smoke test (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a pnpm test:e2e
+
+      - name: Smoke test (Windows, macOS)
+        if: runner.os != 'Linux'
+        run: pnpm test:e2e
+
+      - name: Package (electron-builder)
+        run: pnpm package
+
+      - name: Upload smoke-test screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: edenwright-screenshot-${{ matrix.os }}
+          path: apps/desktop/e2e/artifacts/*.png
+          if-no-files-found: error
+
+      - name: Upload packaged app
+        uses: actions/upload-artifact@v4
+        with:
+          name: edenwright-${{ matrix.os }}
+          path: |
+            apps/desktop/release/*.exe
+            apps/desktop/release/*.AppImage
+            apps/desktop/release/*.deb
+            apps/desktop/release/*.dmg
+            apps/desktop/release/*.zip
+          if-no-files-found: error

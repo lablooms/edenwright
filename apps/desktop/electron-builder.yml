@@ -1,0 +1,52 @@
+appId: studio.lablooms.edenwright
+productName: Edenwright
+copyright: Copyright © 2026 Lablooms Studio
+
+directories:
+  output: release
+  buildResources: build
+
+# electron-vite bundles every pure-JS dependency into out/. The one native
+# module (better-sqlite3, plus its tiny loader closure) ships unpacked from
+# node_modules — Electron can't load .node binaries from inside the asar.
+files:
+  - out/**
+  - package.json
+  - node_modules/better-sqlite3/**
+  - node_modules/bindings/**
+  - node_modules/file-uri-to-path/**
+
+asar: true
+asarUnpack:
+  - "**/*.node"
+
+# ensure-sqlite.mjs already fetched the correct Electron-ABI prebuilt;
+# rebuilding native modules at package time is redundant (and toolchainless
+# dev machines can't). CI runners could, but they don't need to.
+npmRebuild: false
+
+win:
+  target:
+    - nsis
+    - portable
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  artifactName: ${productName}-${version}-win-${arch}-setup.${ext}
+portable:
+  artifactName: ${productName}-${version}-win-${arch}-portable.${ext}
+
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Office
+  maintainer: Lablooms Studio
+  syncDesktopName: true
+  artifactName: ${productName}-${version}-linux-${arch}.${ext}
+
+mac:
+  target:
+    - dmg
+  category: public.app-category.productivity
+  artifactName: ${productName}-${version}-mac-${arch}.${ext}

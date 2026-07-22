@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+    "paths": {
+      "@edenwright/ui": ["../../packages/ui/src/index.ts"],
+      "@edenwright/core": ["../../packages/core/src/index.ts"],
+      "@edenwright/plugin-api": ["../../packages/plugin-api/src/index.ts"],
+      "@edenwright/exporters": ["../../packages/exporters/src/index.ts"]
+    },
+    "sourceMap": false,
+    "declaration": false,
+    "declarationMap": false
+  },
+  "include": ["src/renderer", "src/preload/api.ts"]
+}

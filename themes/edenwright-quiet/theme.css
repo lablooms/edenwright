@@ -1,0 +1,15 @@
+/**
+ * Edenwright Quiet (SPEC §9.6): a low-saturation dark theme. The same
+ * structure as the default, with violet and leaf both pulled toward
+ * neutral — quiet, never gray (derived layers still come from the palette).
+ */
+
+:root {
+  --ew-leaf: #4fbf8f;
+  --ew-leaf-bright: #79d4ae;
+  --ew-leaf-deep: #2f8f66;
+  --ew-abyss: #1a1721;
+  --ew-void: #0e0d12;
+  --ew-ink: #e2deea;
+  --ew-ink-dim: #8d8799;
+}

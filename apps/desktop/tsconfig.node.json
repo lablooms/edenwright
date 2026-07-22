@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "paths": {
+      "@edenwright/core": ["../../packages/core/src/index.ts"],
+      "@edenwright/plugin-api": ["../../packages/plugin-api/src/index.ts"]
+    },
+    "sourceMap": false,
+    "declaration": false,
+    "declarationMap": false
+  },
+  "include": [
+    "src/main",
+    "src/preload",
+    "e2e",
+    "electron.vite.config.ts",
+    "playwright.config.ts",
+    "vitest.config.ts"
+  ]
+}

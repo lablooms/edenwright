@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "lablooms.screenplay-mode",
+      "name": "Screenplay Mode",
+      "version": "0.1.0-beta",
+      "description": "Courier Prime, element inference, Tab cycling, minute estimate — for screenplay-medium projects.",
+      "author": "Lablooms Studio",
+      "repo": "lablooms/edenwright",
+      "releaseTag": "seed-screenplay-mode-v0.1.0"
+    },
+    {
+      "id": "lablooms.comic-rail",
+      "name": "Comic Rail",
+      "version": "0.1.0-beta",
+      "description": "PAGE/PANEL structure aids and a page-flow rail showing panel rhythm — for comic-medium projects.",
+      "author": "Lablooms Studio",
+      "repo": "lablooms/edenwright",
+      "releaseTag": "seed-comic-rail-v0.1.0"
+    },
+    {
+      "id": "lablooms.story-canvas",
+      "name": "Story Canvas",
+      "version": "0.1.0-beta",
+      "description": "A node canvas over graph.json with a walk mode — for interactive-medium projects.",
+      "author": "Lablooms Studio",
+      "repo": "lablooms/edenwright",
+      "releaseTag": "seed-story-canvas-v0.1.0"
+    },
+    {
+      "id": "lablooms.medium-exporters",
+      "name": "Medium Exporters",
+      "version": "0.1.0-beta",
+      "description": "Fountain, Final Draft FDX, screenplay PDF, comic script, Ren'Py, Twee — medium serializations.",
+      "author": "Lablooms Studio",
+      "repo": "lablooms/edenwright",
+      "releaseTag": "seed-medium-exporters-v0.1.0"
+    },
+    {
+      "id": "lablooms.structure-wizards",
+      "name": "Structure Wizards",
+      "version": "0.1.0-beta",
+      "description": "Guided outline generators — Snowflake, Save the Cat, Hero's Journey — that scaffold a project's tree.",
+      "author": "Lablooms Studio",
+      "repo": "lablooms/edenwright",
+      "releaseTag": "seed-structure-wizards-v0.1.0"
+    },
+    {
+      "id": "lablooms.sprints",
+      "name": "Sprints",
+      "version": "0.1.0-beta",
+      "description": "A writing-sprint timer with session stats — words per sprint, best streak, today's totals.",
+      "author": "Lablooms Studio",
+      "repo": "lablooms/edenwright",
+      "releaseTag": "seed-sprints-v0.1.0"
+    },
+    {
+      "id": "lablooms.namesmith",
+      "name": "Namesmith",
+      "version": "0.1.0-beta",
+      "description": "A name generator with seeded culture and style lists. No network, all forge.",
+      "author": "Lablooms Studio",
+      "repo": "lablooms/edenwright",
+      "releaseTag": "seed-namesmith-v0.1.0"
+    },
+    {
+      "id": "lablooms.stats-deluxe",
+      "name": "Stats Deluxe",
+      "version": "0.1.0-beta",
+      "description": "Charts dashboard: writing pace, word heatmaps, per-entity screen time.",
+      "author": "Lablooms Studio",
+      "repo": "lablooms/edenwright",
+      "releaseTag": "seed-stats-deluxe-v0.1.0"
+    },
+    {
+      "id": "lablooms.extra-exporters",
+      "name": "Extra Exporters",
+      "version": "0.1.0-beta",
+      "description": "Two more ways out: single-file HTML export and a Markdown zip bundle.",
+      "author": "Lablooms Studio",
+      "repo": "lablooms/edenwright",
+      "releaseTag": "seed-extra-exporters-v0.1.0"
+    }
+  ]
+}

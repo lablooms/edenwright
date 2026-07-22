@@ -1,0 +1,40 @@
+.ew-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ew-space-2);
+  padding: var(--ew-space-2) var(--ew-space-4);
+  border-radius: var(--ew-radius-sm);
+  font-weight: 500;
+  transition:
+    background-color var(--ew-motion-fast) var(--ew-ease-out),
+    color var(--ew-motion-fast) var(--ew-ease-out),
+    border-color var(--ew-motion-fast) var(--ew-ease-out);
+}
+
+.ew-button--primary {
+  background: var(--ew-accent);
+  color: var(--ew-on-accent);
+}
+
+.ew-button--primary:hover:not(:disabled) {
+  background: var(--ew-accent-hover);
+}
+
+.ew-button--primary:active:not(:disabled) {
+  background: var(--ew-accent-pressed);
+}
+
+.ew-button--ghost {
+  background: transparent;
+  color: var(--ew-ink);
+  border: 1px solid var(--ew-border);
+}
+
+.ew-button--ghost:hover:not(:disabled) {
+  background: var(--ew-surface-hover);
+  border-color: var(--ew-border-strong);
+}
+
+.ew-button:disabled {
+  opacity: 0.45;
+}

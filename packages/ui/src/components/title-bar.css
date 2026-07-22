@@ -1,0 +1,70 @@
+.ew-titlebar {
+  display: flex;
+  align-items: center;
+  height: var(--ew-titlebar-height);
+  background: var(--ew-void);
+  border-bottom: 1px solid var(--ew-border);
+  -webkit-app-region: drag;
+}
+
+.ew-titlebar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--ew-space-2);
+  padding: 0 var(--ew-space-3);
+}
+
+.ew-titlebar__brand[data-platform="mac"] {
+  /* Clear the native traffic lights. */
+  padding-left: 84px;
+}
+
+.ew-titlebar__wordmark {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.ew-titlebar__badge {
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px var(--ew-space-2);
+  border-radius: 999px;
+  background: var(--ew-accent-tint);
+  color: var(--ew-leaf);
+}
+
+.ew-titlebar__drag {
+  flex: 1;
+  align-self: stretch;
+}
+
+.ew-titlebar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ew-space-1);
+  padding: 0 var(--ew-space-2);
+  -webkit-app-region: no-drag;
+}
+
+.ew-titlebar__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 28px;
+  border-radius: var(--ew-radius-sm);
+  color: var(--ew-ink-dim);
+  transition:
+    background-color var(--ew-motion-fast) var(--ew-ease-out),
+    color var(--ew-motion-fast) var(--ew-ease-out);
+}
+
+.ew-titlebar__button:hover {
+  background: var(--ew-surface-hover);
+  color: var(--ew-ink);
+}
+
+.ew-titlebar__button[aria-pressed="true"] {
+  background: var(--ew-accent-tint);
+  color: var(--ew-leaf);
+}

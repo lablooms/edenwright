@@ -1,0 +1,44 @@
+{
+  "name": "@edenwright/plugin-api",
+  "version": "0.1.0-beta",
+  "description": "The public, typed Edenwright plugin API (SPEC §9). Everything a plugin can do is declared here — first-party engines included.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "docs": "typedoc --plugin typedoc-plugin-markdown --out ../../docs/plugins/api --readme none --hideGenerator src/index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@codemirror/state": "^6.5.2",
+    "@edenwright/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.27",
+    "react": "^18.3.1",
+    "typedoc": "^0.28.20",
+    "typedoc-plugin-markdown": "^4.12.0",
+    "typescript": "~5.9.3",
+    "vitest": "^4.1.10"
+  }
+}

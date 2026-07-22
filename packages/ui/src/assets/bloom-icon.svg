@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Lablooms ink-drop bloom, Edenwright leaf tones (SPEC §3.3).
+       Placeholder app icon: clean geometry so the final art swaps in trivially. -->
+  <rect width="1024" height="1024" rx="224" fill="#0B0713"/>
+  <g fill="#8FF5C2">
+    <ellipse cx="512" cy="290" rx="100" ry="200"/>
+    <ellipse cx="512" cy="290" rx="100" ry="200" transform="rotate(45 512 512)"/>
+    <ellipse cx="512" cy="290" rx="100" ry="200" transform="rotate(90 512 512)"/>
+    <ellipse cx="512" cy="290" rx="100" ry="200" transform="rotate(135 512 512)"/>
+    <ellipse cx="512" cy="290" rx="100" ry="200" transform="rotate(180 512 512)"/>
+    <ellipse cx="512" cy="290" rx="100" ry="200" transform="rotate(225 512 512)"/>
+    <ellipse cx="512" cy="290" rx="100" ry="200" transform="rotate(270 512 512)"/>
+    <ellipse cx="512" cy="290" rx="100" ry="200" transform="rotate(315 512 512)"/>
+  </g>
+  <g fill="#3AE98D">
+    <ellipse cx="512" cy="350" rx="64" ry="140" transform="rotate(22.5 512 512)"/>
+    <ellipse cx="512" cy="350" rx="64" ry="140" transform="rotate(67.5 512 512)"/>
+    <ellipse cx="512" cy="350" rx="64" ry="140" transform="rotate(112.5 512 512)"/>
+    <ellipse cx="512" cy="350" rx="64" ry="140" transform="rotate(157.5 512 512)"/>
+    <ellipse cx="512" cy="350" rx="64" ry="140" transform="rotate(202.5 512 512)"/>
+    <ellipse cx="512" cy="350" rx="64" ry="140" transform="rotate(247.5 512 512)"/>
+    <ellipse cx="512" cy="350" rx="64" ry="140" transform="rotate(292.5 512 512)"/>
+    <ellipse cx="512" cy="350" rx="64" ry="140" transform="rotate(337.5 512 512)"/>
+  </g>
+  <circle cx="512" cy="512" r="76" fill="#10A35C"/>
+</svg>

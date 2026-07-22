@@ -1,0 +1,59 @@
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.app-shell__body {
+  flex: 1;
+  min-height: 0;
+}
+
+.loading-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ew-space-4);
+  height: 100%;
+}
+
+.loading-view__text {
+  margin: 0;
+  color: var(--ew-ink-dim);
+  animation: ew-loading-pulse 1.6s var(--ew-ease-out) infinite;
+}
+
+@keyframes ew-loading-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Focus mode (§7.2): chrome fades until hovered; the text stays lit. */
+.app-shell--focus .ew-sidebar,
+.app-shell--focus .ew-panel-layout__side,
+.app-shell--focus .ew-panel-layout__panel,
+.app-shell--focus .viewer__header,
+.app-shell--focus .ew-titlebar {
+  opacity: 0.12;
+  transition: opacity var(--ew-motion-base) var(--ew-ease-out);
+}
+
+.app-shell--focus .ew-sidebar:hover,
+.app-shell--focus .ew-panel-layout__side:hover,
+.app-shell--focus .ew-panel-layout__panel:hover,
+.app-shell--focus .viewer__header:hover,
+.app-shell--focus .ew-titlebar:hover {
+  opacity: 1;
+}
+
+.viewer__session {
+  font-size: 12px;
+  color: var(--ew-leaf);
+  font-variant-numeric: tabular-nums;
+}

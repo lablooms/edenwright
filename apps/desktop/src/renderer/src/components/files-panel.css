@@ -1,0 +1,84 @@
+.files-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.files-panel__eden {
+  display: flex;
+  align-items: center;
+  gap: var(--ew-space-2);
+  padding: var(--ew-space-3) var(--ew-space-3) var(--ew-space-2);
+  border-bottom: 1px solid var(--ew-border);
+}
+
+.files-panel__eden-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.files-panel__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--ew-space-1);
+  padding: var(--ew-space-2) var(--ew-space-3);
+}
+
+.files-panel__label {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ew-ink-dim);
+}
+
+.files-panel__icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--ew-radius-sm);
+  color: var(--ew-ink-dim);
+  transition:
+    background-color var(--ew-motion-fast) var(--ew-ease-out),
+    color var(--ew-motion-fast) var(--ew-ease-out);
+}
+
+.files-panel__icon-button:hover {
+  background: var(--ew-surface-hover);
+  color: var(--ew-ink);
+}
+
+.files-panel__create-input {
+  margin: 0 var(--ew-space-3) var(--ew-space-2);
+  padding: var(--ew-space-1) var(--ew-space-2);
+  font: inherit;
+  font-size: 13px;
+  color: var(--ew-ink);
+  background: var(--ew-void);
+  border: 1px solid var(--ew-leaf-deep);
+  border-radius: var(--ew-radius-sm);
+  outline: none;
+}
+
+.files-panel__tree {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.files-panel__indexing {
+  padding: var(--ew-space-2) var(--ew-space-3);
+  font-size: 11px;
+  color: var(--ew-ink-dim);
+  border-top: 1px solid var(--ew-border);
+  font-variant-numeric: tabular-nums;
+}

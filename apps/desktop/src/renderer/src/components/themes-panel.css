@@ -1,0 +1,143 @@
+/* Themes panel (SPEC §9.5) — every color from tokens (§3.1). */
+
+.ew-themes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ew-space-3);
+  padding: var(--ew-space-3);
+  overflow-y: auto;
+  height: 100%;
+}
+
+.ew-themes__header {
+  display: flex;
+  align-items: center;
+  gap: var(--ew-space-2);
+  color: var(--ew-leaf);
+}
+
+.ew-themes__header h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ew-ink);
+}
+
+.ew-themes__blurb {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ew-ink-dim);
+}
+
+.ew-themes__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ew-space-2);
+}
+
+.ew-themes__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ew-space-1);
+  padding: var(--ew-space-3);
+  border: 1px solid var(--ew-border);
+  border-radius: var(--ew-radius-md);
+  background: var(--ew-surface-raised);
+  transition: border-color var(--ew-motion-fast) var(--ew-ease-out);
+}
+
+.ew-themes__card--active {
+  border-color: var(--ew-leaf);
+}
+
+.ew-themes__card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ew-space-2);
+}
+
+.ew-themes__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ew-ink);
+}
+
+.ew-themes__version {
+  font-family: var(--ew-font-mono);
+  font-size: 10px;
+  color: var(--ew-ink-dim);
+}
+
+.ew-themes__description {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ew-ink-dim);
+}
+
+.ew-themes__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ew-space-2);
+  margin-top: var(--ew-space-1);
+}
+
+.ew-themes__author {
+  font-size: 11px;
+  color: var(--ew-ink-dim);
+}
+
+.ew-themes__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ew-space-2);
+}
+
+.ew-themes__active-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ew-leaf);
+}
+
+.ew-themes__apply {
+  padding: 3px var(--ew-space-2);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ew-on-accent);
+  background: var(--ew-accent);
+  border: none;
+  border-radius: var(--ew-radius-sm);
+  cursor: pointer;
+  transition: background var(--ew-motion-fast) var(--ew-ease-out);
+}
+
+.ew-themes__apply:hover {
+  background: var(--ew-accent-hover);
+}
+
+.ew-themes__remove {
+  display: inline-flex;
+  padding: 3px;
+  color: var(--ew-ink-dim);
+  background: transparent;
+  border: none;
+  border-radius: var(--ew-radius-sm);
+  cursor: pointer;
+  transition: color var(--ew-motion-fast) var(--ew-ease-out);
+}
+
+.ew-themes__remove:hover {
+  color: var(--ew-ink);
+}
