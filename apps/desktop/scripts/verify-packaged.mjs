@@ -38,8 +38,17 @@ try {
   if (stats.files !== 1) {
     throw new Error(`index counted ${stats.files} files, expected 1`);
   }
+  // Bundled seeds must ride along (extraResources → resources/bundle).
+  const bundled = await page.evaluate(() =>
+    window.edenwright.app.readBundled(
+      "plugins/seed/screenplay-mode/manifest.json",
+    ),
+  );
+  if (!bundled.includes("lablooms.screenplay-mode")) {
+    throw new Error("bundled seed manifest missing from the packaged app");
+  }
   console.log(
-    "Packaged app verified: launches, writes, indexes (native sqlite OK).",
+    "Packaged app verified: launches, writes, indexes (native sqlite OK), bundled seeds present.",
   );
 } finally {
   await app?.close();

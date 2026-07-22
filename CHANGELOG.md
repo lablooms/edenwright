@@ -17,3 +17,10 @@ was composted — the garden doesn't ship prototypes.)
 - **Universal exports built in** — manuscript Word, EPUB, PDF, clean Markdown, single-file HTML, Markdown zip, into the project's gitignored `exports/`.
 - **Community from day one** — theme system (built-in dark + Light & Quiet in the tab), registry-backed community tab with offline fallback, plugin dev docs, and optional medium plugins (screenplay mode, comic rail, story canvas, medium exporters) plus writing companions (structure wizards, sprints, namesmith, stats).
 - **The plain-files promise** — the index is a disposable cache; snapshots every 10 minutes; conflict copies never clobber; atomic writes; no accounts, no cloud, no telemetry.
+
+### Polish (the founder's first-drive round)
+
+- **The editor finally feels like writing.** Tab and Shift-Tab indent and outdent — never an escape hatch to the next control. Enter continues lists. Brackets pair, while quotes keep curling through smart typography instead of doubling. Scene breaks (`***`) sit centered.
+- **@-completion works from the first letter.** A CodeMirror quirk (one-character queries only match a label's first character) used to kill the tooltip the moment you typed past `@` — the bug behind "the codex doesn't work." The codex panel also gained a filter, saner creation defaults (your current project, not the first world), live refresh, and an actual answer when there's nowhere to plant an entity yet.
+- **Community installs work offline.** First-party seeds (plugins and themes) ship inside the app and install from the bundle — no release download required; third-party entries still download, and there's an e2e to prove it.
+- **It's an actual app now.** Help menu in the title bar (About, Check for Updates…, User guide, Report an issue, DevTools), an About dialog with the one sanctioned Lablooms-pink credit, a manual update check that always reports back, and preset icons that aren't all the same puzzle piece.
