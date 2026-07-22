@@ -1,4 +1,9 @@
 import type { Extension } from "@codemirror/state";
+import * as cmCommands from "@codemirror/commands";
+import * as cmLanguage from "@codemirror/language";
+import * as cmSearch from "@codemirror/search";
+import * as cmState from "@codemirror/state";
+import * as cmView from "@codemirror/view";
 import type { FileSystemAdapter } from "@edenwright/core";
 import * as pluginApi from "@edenwright/plugin-api";
 import {
@@ -37,8 +42,9 @@ export interface RuntimeDeps {
 
 /**
  * The plugin runtime (SPEC §9). Plugins live in the renderer (they touch the
- * DOM and CodeMirror), are evaluated as CJS modules with exactly two allowed
- * imports — `@edenwright/plugin-api` and their own manifest — and every
+ * DOM and CodeMirror), are evaluated as CJS modules with an allow-list of imports —
+ * `@edenwright/plugin-api`, the app’s own `@codemirror/*` instances, and
+ * their own manifest — and every
  * registration lands in the plugin store as a Disposable. Unloading disposes
  * everything the plugin ever registered.
  */
@@ -205,11 +211,22 @@ export class PluginRuntime {
 
   private evaluate(manifest: PluginManifest, code: string): EdenwrightPlugin {
     const moduleShim: { exports: unknown } = { exports: {} };
+    // The app's own module instances — a plugin's CM extension must share
+    // class identity with the editor's CodeMirror (a second copy breaks
+    // instanceof). This is the whole allow-list; everything else is inlined.
+    const modules: Record<string, unknown> = {
+      "@edenwright/plugin-api": pluginApi,
+      "@codemirror/state": cmState,
+      "@codemirror/view": cmView,
+      "@codemirror/commands": cmCommands,
+      "@codemirror/language": cmLanguage,
+      "@codemirror/search": cmSearch,
+      "./manifest.json": manifest,
+    };
     const requireShim = (id: string): unknown => {
-      if (id === "@edenwright/plugin-api") return pluginApi;
-      if (id === "./manifest.json") return manifest;
+      if (id in modules) return modules[id];
       throw new Error(
-        `Plugins can only require "@edenwright/plugin-api" — got "${id}".`,
+        `Plugin "${manifest.id}" required "${id}" — only @edenwright/plugin-api, @codemirror/*, and ./manifest.json are allowed.`,
       );
     };
     // Plugins are trusted code by explicit user choice (§9.3); evaluation is
