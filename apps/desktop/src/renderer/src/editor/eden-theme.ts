@@ -54,7 +54,12 @@ export function edenTheme(): import("@codemirror/state").Extension {
       fontSize: "0.88em",
       backgroundColor: "var(--ew-surface-raised)",
     },
-    ".cm-ew-hr": { color: "var(--ew-leaf-deep)", letterSpacing: "0.3em" },
+    // Scene breaks read centered — `***` is a breath, not a list item.
+    ".cm-ew-hr": {
+      color: "var(--ew-leaf-deep)",
+      letterSpacing: "0.3em",
+      textAlign: "center",
+    },
     ".cm-ew-frontmatter": {
       fontFamily: "var(--ew-font-mono)",
       fontSize: "0.8em",

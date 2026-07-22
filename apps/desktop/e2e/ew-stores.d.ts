@@ -37,6 +37,7 @@ declare global {
   const document: {
     documentElement: unknown;
     querySelector(selector: string): unknown;
+    querySelectorAll(selector: string): unknown[];
   };
 }
 

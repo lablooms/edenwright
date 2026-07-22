@@ -1,7 +1,12 @@
 import { useEffect, useRef } from "react";
 
-import { autocompletion } from "@codemirror/autocomplete";
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
+import { autocompletion, closeBrackets } from "@codemirror/autocomplete";
+import {
+  defaultKeymap,
+  history,
+  historyKeymap,
+  indentWithTab,
+} from "@codemirror/commands";
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import {
   highlightSelectionMatches,
@@ -145,8 +150,10 @@ export function MarkdownEditor({
           }),
           EditorView.lineWrapping,
           // Plugin keymaps (e.g. screenplay Tab-cycling) must outrank
-          // defaultKeymap's Enter (CM keymap precedence: earlier wins).
+          // everything below (CM keymap precedence: earlier wins).
           pluginCompartment.current.of(pluginExtensions),
+          // Writers hit Tab to indent — never to escape the editor (§11).
+          keymap.of([indentWithTab]),
           keymap.of([
             {
               key: "Mod-s",
@@ -159,6 +166,12 @@ export function MarkdownEditor({
             ...historyKeymap,
             ...searchKeymap,
           ]),
+          // Brackets pair; quotes do NOT auto-close — smart typography
+          // below curls them instead, which is what a writer wants.
+          markdownLanguage.data.of({
+            closeBrackets: { brackets: ["(", "[", "{"] },
+          }),
+          closeBrackets(),
           typographyCompartment.current.of(
             smartQuotes ? smartTypography() : [],
           ),
