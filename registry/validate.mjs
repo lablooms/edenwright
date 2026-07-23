@@ -69,6 +69,9 @@ async function validateFile(file, kind) {
       ) {
         fail(file, index, "bundled must be plugins/seed/<id> or themes/<id>");
       } else if (
+        // The existence check only applies in the main repo (the seeds live
+        // beside registry/ there); in the registry repo, shape is enough.
+        existsSync(join(here, "..", "plugins", "seed")) &&
         !existsSync(join(here, "..", entry.bundled, "manifest.json"))
       ) {
         fail(file, index, `bundled path ${entry.bundled} has no manifest.json`);
