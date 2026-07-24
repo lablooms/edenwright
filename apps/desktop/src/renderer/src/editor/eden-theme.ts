@@ -14,8 +14,11 @@ export function edenTheme(): import("@codemirror/state").Extension {
     },
     ".cm-content": {
       lineHeight: "1.7",
+      // Comfort settings ride CSS vars on .markdown-editor so the settings
+      // sliders restyle the editor without a CM reconfigure (R4).
+      fontSize: "var(--ew-editor-font-size, 17px)",
       padding:
-        "var(--ew-space-6) max(var(--ew-space-8), calc((100% - 72ch) / 2))",
+        "var(--ew-space-6) max(var(--ew-space-8), calc((100% - var(--ew-editor-line-width, 72ch)) / 2))",
       caretColor: "var(--ew-leaf)",
     },
     ".cm-scroller": {

@@ -11,6 +11,8 @@ import {
   type Page,
 } from "@playwright/test";
 
+import { createTestEden } from "./helpers";
+
 const appRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 // W4 (founder): the writing workspace must feel like writing — Tab indents
@@ -29,23 +31,10 @@ test.describe("W4 — Writing feel", () => {
     });
     page = await app.firstWindow();
 
-    await page.evaluate(
-      (parent) => window.edenwright.eden.create(parent, "W4 Eden"),
-      sandbox.replace(/\\/g, "/"),
-    );
+    await createTestEden(page, sandbox, "W4 Eden");
     await page.evaluate(async () => {
-      await window.edenwright.projects.create({
-        name: "Hollow Crown",
-        preset: "novel",
-        medium: "prose",
-        scaffold: [
-          { path: "manuscript" },
-          { path: "codex" },
-          { path: "notes" },
-        ],
-      });
       await window.edenwright.files.write(
-        "Projects/Hollow Crown/manuscript/scene.md",
+        "manuscript/scene.md",
         "The first line.\n\n- one\n- two",
         null,
       );
@@ -53,9 +42,7 @@ test.describe("W4 — Writing feel", () => {
     });
     await page.locator(".ew-sidebar").waitFor({ timeout: 30000 });
     await page.evaluate(() =>
-      window.__ewStores.app
-        .getState()
-        .openFileAt("Projects/Hollow Crown/manuscript/scene.md"),
+      window.__ewStores.app.getState().openFileAt("manuscript/scene.md"),
     );
     await page.locator(".cm-content").click();
   });

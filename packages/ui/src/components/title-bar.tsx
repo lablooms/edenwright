@@ -15,6 +15,8 @@ export interface TitleBarProps {
   onTogglePanel: () => void;
   /** App-level menu (Help/About), rendered before the window controls. */
   menu?: React.ReactNode;
+  /** Eden switcher (current eden name), rendered next to the brand. */
+  switcher?: React.ReactNode;
   /** The beta badge opens About when provided. */
   onBadgeClick?: () => void;
 }
@@ -29,6 +31,7 @@ export function TitleBar({
   onClose,
   onTogglePanel,
   menu,
+  switcher,
   onBadgeClick,
 }: TitleBarProps) {
   return (
@@ -51,6 +54,7 @@ export function TitleBar({
         ) : (
           <span className="ew-titlebar__badge">beta</span>
         )}
+        {switcher}
       </div>
       <div className="ew-titlebar__drag" aria-hidden />
       <div className="ew-titlebar__actions">

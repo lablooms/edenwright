@@ -296,8 +296,11 @@ function screenplayMode() {
     showPanel.of(minutePanel),
     // The v1 CM theme is styles.css now; this marker class scopes those
     // rules to screenplay editors only — plugin CSS loads app-wide. (It's a
-    // Facet, not a function — see @codemirror/view docs.)
-    EditorView.editorAttributes.of({ class: "cm-ew-screenplay" }),
+    // Facet, not a function — see @codemirror/view docs.) `cm-ew-plugin-mode`
+    // is the mode marker: chrome like the writer toolbar steps aside (R4).
+    EditorView.editorAttributes.of({
+      class: "cm-ew-screenplay cm-ew-plugin-mode",
+    }),
   ];
 }
 

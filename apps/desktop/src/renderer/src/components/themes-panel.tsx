@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Check, Flower2, Trash2 } from "lucide-react";
 
 import { useThemeStore } from "../themes/theme-store";
-import { CommunitySection } from "./community-section";
+import { ThemesCommunitySection } from "./themes-community-section";
 
 import "./themes-panel.css";
 
@@ -81,7 +81,7 @@ export function ThemesPanel() {
           );
         })}
       </ul>
-      <CommunitySection kind="themes" />
+      <ThemesCommunitySection />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 /**
- * Structure Wizards (SPEC §9.6.1): guided outline generators that scaffold a
- * project's tree. Everything happens through the public plugin API — files
+ * Structure Wizards (SPEC §9.6.1): guided outline generators that scaffold
+ * the eden's tree. Everything happens through the public plugin API — files
  * are created with ctx.eden.fs, existing files are never overwritten.
  */
 
@@ -100,24 +100,6 @@ const WIZARDS = [
   },
 ];
 
-/** Projects = directories under Projects/ containing a project.json. */
-async function listProjects(fs) {
-  let entries = [];
-  try {
-    entries = await fs.list("Projects");
-  } catch {
-    return [];
-  }
-  const projects = [];
-  for (const entry of entries) {
-    if (entry.kind !== "directory") continue;
-    if (await fs.exists(`Projects/${entry.name}/project.json`)) {
-      projects.push(entry.name);
-    }
-  }
-  return projects;
-}
-
 module.exports = definePlugin({
   manifest: require("./manifest.json"),
 
@@ -127,29 +109,8 @@ module.exports = definePlugin({
         id: `structure-wizards:${wizard.id}`,
         name: `Scaffold outline: ${wizard.name}`,
         callback: async () => {
-          const projects = await listProjects(ctx.eden.fs);
-          if (projects.length === 0) {
-            ctx.notices.show(
-              "Create a project first — outlines need somewhere to grow.",
-            );
-            return;
-          }
-          let project = projects[0];
-          if (projects.length > 1) {
-            const choice = await ctx.notices.modal({
-              title: `${wizard.name}: which project?`,
-              body: "The outline files land in the project's outline/ folder.",
-              actions: projects.map((name, index) => ({
-                id: name,
-                label: name,
-                primary: index === 0,
-              })),
-            });
-            if (!choice) return;
-            project = choice;
-          }
-
-          const base = `Projects/${project}/outline/${wizard.name}`;
+          // One eden = one story: outlines grow at the eden root.
+          const base = `outline/${wizard.name}`;
           await ctx.eden.fs.mkdir(base);
           let created = 0;
           let skipped = 0;
@@ -169,7 +130,7 @@ module.exports = definePlugin({
           ctx.notices.show(
             skipped > 0
               ? `${wizard.name}: ${created} files planted, ${skipped} kept (already existed).`
-              : `${wizard.name}: ${created} outline files planted in ${project}/outline.`,
+              : `${wizard.name}: ${created} outline files planted in outline/.`,
           );
         },
       });

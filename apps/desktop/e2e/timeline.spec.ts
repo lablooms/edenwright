@@ -11,6 +11,8 @@ import {
   type Page,
 } from "@playwright/test";
 
+import { createTestEden } from "./helpers";
+
 declare const PointerEvent: new (
   type: string,
   init: {
@@ -54,34 +56,20 @@ test.describe("M5 — Timeline", () => {
     });
     page = await app.firstWindow();
 
-    await page.evaluate(
-      (parent) => window.edenwright.eden.create(parent, "M5T Eden"),
-      sandbox.replace(/\\/g, "/"),
-    );
-    await page.evaluate(() => window.edenwright.test!.whenRebuilt());
+    await createTestEden(page, sandbox, "M5T Eden");
     await page.evaluate(async () => {
-      await window.edenwright.projects.create({
-        name: "Hollow Crown",
-        preset: "novel",
-        medium: "prose",
-        scaffold: [
-          { path: "manuscript" },
-          { path: "codex" },
-          { path: "notes" },
-        ],
-      });
       await window.edenwright.files.write(
-        "Projects/Hollow Crown/manuscript/fall.md",
+        "manuscript/fall.md",
         '---\ntitle: "The Fall"\nstoryDate: 1042-03-17\n---\n@yuki fell.\n',
         null,
       );
       await window.edenwright.files.write(
-        "Projects/Hollow Crown/manuscript/door.md",
+        "manuscript/door.md",
         '---\ntitle: "The Door"\nstoryDate: 1042-03-17\n---\n@yuki found the door.\n',
         null,
       );
       await window.edenwright.files.write(
-        "Projects/Hollow Crown/manuscript/steps.md",
+        "manuscript/steps.md",
         '---\ntitle: "The Steps"\nstoryDate: 1042-03-20\n---\nShe climbed.\n',
         null,
       );
@@ -162,14 +150,7 @@ test.describe("M5 — Timeline", () => {
     });
 
     const onDisk = await readFile(
-      join(
-        sandbox,
-        "M5T Eden",
-        "Projects",
-        "Hollow Crown",
-        "manuscript",
-        "steps.md",
-      ),
+      join(sandbox, "M5T Eden", "manuscript", "steps.md"),
       "utf8",
     );
     expect(onDisk).toContain("storyDate: 1042-03-17");

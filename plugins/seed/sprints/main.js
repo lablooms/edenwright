@@ -14,8 +14,11 @@ module.exports = definePlugin({
 
   onload(ctx) {
     let timer = null;
-    let sprint = null; // { endsAt, startWords, durationMin, projectPath }
+    let sprint = null; // { endsAt, startWords, durationMin }
     let panel = null;
+
+    // One eden = one story: sprint words count every markdown file in it.
+    const SKIP_DIRS = new Set([".eden", ".git", "exports", "node_modules"]);
 
     const walkMarkdown = async (dir, out = []) => {
       let entries = [];
@@ -25,27 +28,24 @@ module.exports = definePlugin({
         return out;
       }
       for (const entry of entries) {
-        const path = `${dir}/${entry.name}`;
-        if (entry.kind === "directory") await walkMarkdown(path, out);
-        else if (entry.name.toLowerCase().endsWith(".md")) out.push(path);
+        const path = dir ? `${dir}/${entry.name}` : entry.name;
+        if (entry.kind === "directory") {
+          if (!SKIP_DIRS.has(entry.name)) await walkMarkdown(path, out);
+        } else if (entry.name.toLowerCase().endsWith(".md")) {
+          out.push(path);
+        }
       }
       return out;
     };
 
-    const projectWords = async (projectPath) => {
-      const files = await walkMarkdown(projectPath);
+    const edenWords = async () => {
+      const files = await walkMarkdown("");
       let total = 0;
       for (const path of files) {
         const info = await ctx.index.getFileInfo(path);
         total += info?.wordCount ?? 0;
       }
       return total;
-    };
-
-    const firstProjectPath = async () => {
-      const entries = await ctx.eden.fs.list("Projects").catch(() => []);
-      const dir = entries.find((entry) => entry.kind === "directory");
-      return dir ? `Projects/${dir.name}` : null;
     };
 
     const loadStats = async () => {
@@ -69,7 +69,7 @@ module.exports = definePlugin({
       element.innerHTML = `
         <h3>Sprints</h3>
         <p class="sprints-blurb">Pick a length, write until the bell. Words are
-           counted from your project's files.</p>
+           counted from your eden's files.</p>
         <div class="sprints-durations">
           ${DURATIONS_MIN.map(
             (min) =>
@@ -115,7 +115,7 @@ module.exports = definePlugin({
       sprint = null;
       rerender();
       if (!finished || !done) return;
-      const endWords = await projectWords(done.projectPath);
+      const endWords = await edenWords();
       const delta = Math.max(0, endWords - done.startWords);
       const stats = await loadStats();
       stats.sprints += 1;
@@ -128,16 +128,10 @@ module.exports = definePlugin({
     };
 
     const startSprint = async (durationMin) => {
-      const projectPath = await firstProjectPath();
-      if (!projectPath) {
-        ctx.notices.show("Create a project first — sprints count its words.");
-        return;
-      }
       sprint = {
         endsAt: Date.now() + durationMin * 60_000,
-        startWords: await projectWords(projectPath),
+        startWords: await edenWords(),
         durationMin,
-        projectPath,
       };
       timer = setInterval(() => {
         if (sprint && Date.now() >= sprint.endsAt) void stopSprint(true);

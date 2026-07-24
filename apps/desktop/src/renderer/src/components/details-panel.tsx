@@ -1,13 +1,13 @@
 import { useState } from "react";
 
-import { countWords, projectNameFromPath } from "@edenwright/core";
-import { X } from "lucide-react";
+import { countWords, kindFromPath } from "@edenwright/core";
 
-import { Button, Icon } from "@edenwright/ui";
+import { Button } from "@edenwright/ui";
 
 import { ipcErrorMessage, useAppStore } from "../store";
 import { GoalsSection, ScheduleSection } from "./goals-section";
 import { HistorySection } from "./history-section";
+import { OutlineSection } from "./outline-section";
 import "./details-panel.css";
 
 /** Right panel: facts about the open file, plus rename/delete. */
@@ -17,12 +17,11 @@ export function DetailsPanel() {
   const closeFile = useAppStore((state) => state.closeFile);
   const refreshTree = useAppStore((state) => state.refreshTree);
   const toast = useAppStore((state) => state.toast);
+  const edenManifest = useAppStore((state) => state.edenManifest);
+  const editSource = useAppStore((state) => state.editSource);
 
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState("");
-  const projects = useAppStore((state) => state.projects);
-  const worlds = useAppStore((state) => state.worlds);
-  const refreshProjects = useAppStore((state) => state.refreshProjects);
 
   if (!openFile) {
     return (
@@ -38,27 +37,10 @@ export function DetailsPanel() {
   const dir = openFile.path.slice(0, openFile.path.lastIndexOf("/"));
   const fileName = openFile.path.slice(openFile.path.lastIndexOf("/") + 1);
   const words = countWords(openFile.content);
-
-  const projectName = projectNameFromPath(openFile.path);
-  const project = projects.find((item) => item.name === projectName);
-  const linkedWorlds = project?.linkedWorlds ?? [];
-
-  const setLinkedWorlds = async (next: string[]) => {
-    if (!project) return;
-    try {
-      await window.edenwright.projects.update(project.name, {
-        linkedWorlds: next,
-      });
-      await refreshProjects();
-      toast(
-        next.length > linkedWorlds.length
-          ? "World linked — its cast is in reach now."
-          : "World unlinked.",
-      );
-    } catch (error) {
-      toast(ipcErrorMessage(error), "warn");
-    }
-  };
+  // The outline belongs to prose files — a codex sheet is form, not text.
+  const showOutline =
+    openFile.path.toLowerCase().endsWith(".md") &&
+    (kindFromPath(openFile.path) !== "codex" || editSource);
 
   const submitRename = async () => {
     const trimmed = newName.trim();
@@ -109,60 +91,12 @@ export function DetailsPanel() {
         <dd>{words.toLocaleString()}</dd>
       </dl>
 
-      {project ? <GoalsSection project={project} /> : null}
+      {showOutline ? <OutlineSection /> : null}
 
-      {project?.preset === "serial" ? (
-        <ScheduleSection project={project} />
-      ) : null}
+      {edenManifest ? <GoalsSection manifest={edenManifest} /> : null}
 
-      {project ? (
-        <section className="details-panel__world">
-          <h3 className="details-panel__heading">Linked worlds</h3>
-          <div className="details-panel__world-chips">
-            {linkedWorlds.map((world) => (
-              <span key={world} className="details-panel__world-chip">
-                {world}
-                <button
-                  type="button"
-                  title={`Unlink ${world}`}
-                  onClick={() =>
-                    void setLinkedWorlds(
-                      linkedWorlds.filter((item) => item !== world),
-                    )
-                  }
-                >
-                  <Icon icon={X} size={11} />
-                </button>
-              </span>
-            ))}
-          </div>
-          {worlds.filter((world) => !linkedWorlds.includes(world.name)).length >
-          0 ? (
-            <select
-              className="details-panel__world-select"
-              value=""
-              onChange={(event) => {
-                const world = event.target.value;
-                if (world) void setLinkedWorlds([...linkedWorlds, world]);
-              }}
-            >
-              <option value="">Link a world…</option>
-              {worlds
-                .filter((world) => !linkedWorlds.includes(world.name))
-                .map((world) => (
-                  <option key={world.name} value={world.name}>
-                    {world.name}
-                  </option>
-                ))}
-            </select>
-          ) : null}
-          {linkedWorlds.length === 0 ? (
-            <p className="details-panel__body">
-              No linked worlds — link one and its cast joins this project's
-              @-completion and searches.
-            </p>
-          ) : null}
-        </section>
+      {edenManifest?.preset === "serial" ? (
+        <ScheduleSection manifest={edenManifest} />
       ) : null}
 
       <HistorySection />

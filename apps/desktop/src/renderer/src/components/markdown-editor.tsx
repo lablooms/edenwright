@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 
 import { autocompletion, closeBrackets } from "@codemirror/autocomplete";
 import {
@@ -18,10 +18,13 @@ import { EditorView, keymap } from "@codemirror/view";
 
 import { mentionCompletion, wikiLinkCompletion } from "../editor/completions";
 import { edenTheme } from "../editor/eden-theme";
+import { useEditorViewStore } from "../editor/editor-view-store";
 import { focusModeExtensions } from "../editor/focus-mode";
+import { activeFormatsAt, formatKeymap } from "../editor/format-commands";
 import { linkNavigation } from "../editor/link-navigation";
 import { livePreview } from "../editor/live-preview";
 import { smartTypography } from "../editor/smart-typography";
+import { typewriterMode } from "../editor/typewriter-mode";
 import "./markdown-editor.css";
 
 /** Bundled font ids (SPEC §3.2) → token stacks; anything else is a system font. */
@@ -32,21 +35,16 @@ const FONT_STACKS: Record<string, string> = {
   "courier-prime": "var(--ew-font-screenplay)",
 };
 
-function fontTheme(
-  fontFamily: string,
-  fontSize: number,
-): import("@codemirror/state").Extension {
+function fontTheme(fontFamily: string): import("@codemirror/state").Extension {
   const family =
     FONT_STACKS[fontFamily] ?? `"${fontFamily}", var(--ew-font-editor)`;
+  // Font SIZE is a CSS var (see eden-theme) — only the family needs CM.
   return EditorView.theme({
     ".cm-content, .cm-scroller": { fontFamily: family },
-    ".cm-content": { fontSize: `${fontSize}px` },
   });
 }
 
 export interface MarkdownEditorProps {
-  /** Eden-relative path of the open file (for project-aware completions). */
-  filePath: string;
   initialContent: string;
   /** Content as the store knows it — the doc follows it on reloads. */
   content: string;
@@ -56,6 +54,9 @@ export interface MarkdownEditorProps {
   smartQuotes: boolean;
   fontFamily: string;
   fontSize: number;
+  /** Editor line length in ch (the settings "line width" slider). */
+  lineWidth: number;
+  typewriterMode: boolean;
   /** CM extensions contributed by plugins (SPEC v2 §7.2) — medium modes ride
    * this slot, so their keymaps outrank the defaults (as engine modes did). */
   pluginExtensions: import("@codemirror/state").Extension[];
@@ -73,7 +74,6 @@ export interface MarkdownEditorProps {
  * One instance per file — the parent keys this component by path.
  */
 export function MarkdownEditor({
-  filePath,
   initialContent,
   content,
   savedContent,
@@ -81,6 +81,8 @@ export function MarkdownEditor({
   smartQuotes,
   fontFamily,
   fontSize,
+  lineWidth,
+  typewriterMode: typewriter,
   pluginExtensions,
   revealTerm,
   onChange,
@@ -94,6 +96,7 @@ export function MarkdownEditor({
   const focusCompartment = useRef(new Compartment());
   const typographyCompartment = useRef(new Compartment());
   const fontCompartment = useRef(new Compartment());
+  const typewriterCompartment = useRef(new Compartment());
   const pluginCompartment = useRef(new Compartment());
   const savedRef = useRef(savedContent);
   const dirtyRef = useRef(false);
@@ -131,14 +134,8 @@ export function MarkdownEditor({
           autocompletion({
             override: [
               wikiLinkCompletion(() => window.edenwright.query.files()),
-              mentionCompletion(() => {
-                // Project-aware entities: own codex + linked worlds' (§7.5).
-                const segments = filePath.split("/");
-                if (segments[0] === "Projects" && segments[1]) {
-                  return window.edenwright.entities.forProject(segments[1]);
-                }
-                return window.edenwright.query.entities();
-              }),
+              // One eden, one codex: @ completes every entity in it.
+              mentionCompletion(() => window.edenwright.query.entities()),
             ],
             activateOnTyping: true,
           }),
@@ -152,6 +149,8 @@ export function MarkdownEditor({
           // Plugin keymaps (e.g. screenplay Tab-cycling) must outrank
           // everything below (CM keymap precedence: earlier wins).
           pluginCompartment.current.of(pluginExtensions),
+          // The writer toolbar's hotkeys: above CM defaults, below plugins.
+          formatKeymap,
           // Writers hit Tab to indent — never to escape the editor (§11).
           keymap.of([indentWithTab]),
           keymap.of([
@@ -175,20 +174,33 @@ export function MarkdownEditor({
           typographyCompartment.current.of(
             smartQuotes ? smartTypography() : [],
           ),
-          fontCompartment.current.of(fontTheme(fontFamily, fontSize)),
+          fontCompartment.current.of(fontTheme(fontFamily)),
+          typewriterCompartment.current.of(typewriter ? typewriterMode() : []),
           focusCompartment.current.of(focusMode ? focusModeExtensions() : []),
           EditorView.updateListener.of((update) => {
-            if (!update.docChanged) return;
-            const doc = update.state.doc.toString();
-            callbacksRef.current.onChange(doc);
-            dirtyRef.current = doc !== savedRef.current;
+            if (update.docChanged) {
+              const doc = update.state.doc.toString();
+              callbacksRef.current.onChange(doc);
+              dirtyRef.current = doc !== savedRef.current;
+            }
+            if (update.docChanged || update.selectionSet) {
+              // Toolbar highlight follows the caret.
+              useEditorViewStore
+                .getState()
+                .setActiveFormats(activeFormatsAt(update.state));
+            }
           }),
         ],
       }),
     });
     viewRef.current = view;
+    // Chrome around the editor (toolbar, outline) reaches the view here.
+    useEditorViewStore.getState().setView(view);
+    useEditorViewStore.getState().setActiveFormats(activeFormatsAt(view.state));
 
     return () => {
+      useEditorViewStore.getState().setView(null);
+      useEditorViewStore.getState().setActiveFormats(new Set());
       view.destroy();
       viewRef.current = null;
     };
@@ -215,11 +227,17 @@ export function MarkdownEditor({
 
   useEffect(() => {
     viewRef.current?.dispatch({
-      effects: fontCompartment.current.reconfigure(
-        fontTheme(fontFamily, fontSize),
+      effects: fontCompartment.current.reconfigure(fontTheme(fontFamily)),
+    });
+  }, [fontFamily]);
+
+  useEffect(() => {
+    viewRef.current?.dispatch({
+      effects: typewriterCompartment.current.reconfigure(
+        typewriter ? typewriterMode() : [],
       ),
     });
-  }, [fontFamily, fontSize]);
+  }, [typewriter]);
 
   useEffect(() => {
     viewRef.current?.dispatch({
@@ -261,5 +279,13 @@ export function MarkdownEditor({
     callbacksRef.current.onRevealDone();
   }, [revealTerm]);
 
-  return <div className="markdown-editor" ref={containerRef} />;
+  // Comfort settings land as CSS vars on the editor root (see eden-theme).
+  const comfortVars = {
+    "--ew-editor-font-size": `${fontSize}px`,
+    "--ew-editor-line-width": `${lineWidth}ch`,
+  } as CSSProperties;
+
+  return (
+    <div className="markdown-editor" ref={containerRef} style={comfortVars} />
+  );
 }

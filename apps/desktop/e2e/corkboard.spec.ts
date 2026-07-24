@@ -11,6 +11,8 @@ import {
   type Page,
 } from "@playwright/test";
 
+import { createTestEden } from "./helpers";
+
 declare const PointerEvent: new (
   type: string,
   init: {
@@ -40,7 +42,7 @@ declare const document: {
 const appRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 // M5 slice 4 (§7.7): corkboard cards with synopsis/status, drag to reorder
-// persisted to project.json; outliner drag-to-restructure.
+// persisted to eden.json; outliner drag-to-restructure.
 test.describe("M5 — Corkboard & outliner", () => {
   let sandbox: string;
   let app: ElectronApplication;
@@ -55,29 +57,15 @@ test.describe("M5 — Corkboard & outliner", () => {
     });
     page = await app.firstWindow();
 
-    await page.evaluate(
-      (parent) => window.edenwright.eden.create(parent, "M5K Eden"),
-      sandbox.replace(/\\/g, "/"),
-    );
-    await page.evaluate(() => window.edenwright.test!.whenRebuilt());
+    await createTestEden(page, sandbox, "M5K Eden");
     await page.evaluate(async () => {
-      await window.edenwright.projects.create({
-        name: "Hollow Crown",
-        preset: "novel",
-        medium: "prose",
-        scaffold: [
-          { path: "manuscript" },
-          { path: "codex" },
-          { path: "notes" },
-        ],
-      });
       await window.edenwright.files.write(
-        "Projects/Hollow Crown/manuscript/a-fall.md",
+        "manuscript/a-fall.md",
         '---\ntitle: "The Fall"\nsynopsis: "Yuki falls down the stairwell."\nstatus: final\n---\nShe falls.\n',
         null,
       );
       await window.edenwright.files.write(
-        "Projects/Hollow Crown/manuscript/b-door.md",
+        "manuscript/b-door.md",
         '---\ntitle: "The Door"\nsynopsis: "A door appears mid-air."\nstatus: draft\n---\nIt opens.\n',
         null,
       );
@@ -120,14 +108,11 @@ test.describe("M5 — Corkboard & outliner", () => {
     });
 
     const manifest = JSON.parse(
-      await readFile(
-        join(sandbox, "M5K Eden", "Projects", "Hollow Crown", "project.json"),
-        "utf8",
-      ),
+      await readFile(join(sandbox, "M5K Eden", "eden.json"), "utf8"),
     );
     expect(manifest.order).toEqual([
-      "Projects/Hollow Crown/manuscript/b-door.md",
-      "Projects/Hollow Crown/manuscript/a-fall.md",
+      "manuscript/b-door.md",
+      "manuscript/a-fall.md",
     ]);
   });
 
@@ -135,17 +120,17 @@ test.describe("M5 — Corkboard & outliner", () => {
     await page.evaluate(() =>
       window.__ewStores.app.getState().setMainView("editor"),
     );
-    // Expand the project and notes dir via the tree.
-    await page
-      .locator(".file-tree__row", { hasText: "Hollow Crown" })
-      .first()
-      .click();
-    await page.locator(".file-tree__row", { hasText: "manuscript" }).click();
+    // The scaffold lives at the eden root — expand manuscript (store toggle:
+    // a DOM click can race a tree refresh); notes is a top-level row, and
+    // data-dir-path disambiguates it from world/notes.
+    await page.evaluate(() =>
+      window.__ewStores.app.getState().toggleExpanded("manuscript"),
+    );
 
     const fall = page.locator(".file-tree__row--file", {
       hasText: "a-fall.md",
     });
-    const notes = page.locator(".file-tree__row--dir", { hasText: "notes" });
+    const notes = page.locator('[data-dir-path="notes"]');
     await expect(fall).toBeVisible();
     await expect(notes).toBeVisible();
 
@@ -154,9 +139,7 @@ test.describe("M5 — Corkboard & outliner", () => {
       const from = [...document.querySelectorAll(".file-tree__row--file")].find(
         (row) => row.textContent?.includes("a-fall.md"),
       );
-      const to = [...document.querySelectorAll(".file-tree__row--dir")].find(
-        (row) => row.textContent?.includes("notes"),
-      );
+      const to = document.querySelector('[data-dir-path="notes"]');
       if (!from || !to) throw new Error("drag endpoints missing");
       const fromBox = from.getBoundingClientRect();
       const toBox = to.getBoundingClientRect();
@@ -195,14 +178,7 @@ test.describe("M5 — Corkboard & outliner", () => {
     ).toBeVisible({ timeout: 8000 });
 
     const moved = await readFile(
-      join(
-        sandbox,
-        "M5K Eden",
-        "Projects",
-        "Hollow Crown",
-        "notes",
-        "a-fall.md",
-      ),
+      join(sandbox, "M5K Eden", "notes", "a-fall.md"),
       "utf8",
     );
     expect(moved).toContain("She falls.");

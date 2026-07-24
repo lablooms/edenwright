@@ -6,7 +6,7 @@ import {
   SNIPPET_CLOSE,
   SNIPPET_OPEN,
   getBacklinks,
-  listIndexedEntities,
+  listEntities,
   listIndexedFiles,
   rebuildIndex,
   searchIndex,
@@ -27,15 +27,15 @@ describe("index queries over a real eden (§7.3, §7.4)", () => {
     await index.open(join(sandbox, "index.db"));
 
     await fs.writeFile(
-      join(sandbox, "Projects", "Hollow Crown", "manuscript", "scene one.md"),
+      join(sandbox, "manuscript", "scene one.md"),
       '---\nid: scn_1\ntitle: "The Long Way Down"\nstatus: draft\n---\nYuki met the Gray Fox at the docks. @mira watched the rain.\n',
     );
     await fs.writeFile(
-      join(sandbox, "Projects", "Hollow Crown", "codex", "yuki.md"),
+      join(sandbox, "world", "codex", "yuki.md"),
       '---\nid: ent_yuki\ntype: character\nname: "Yuki Harrow"\naliases: ["The Gray Fox"]\n---\nBackstory.\n',
     );
     await fs.writeFile(
-      join(sandbox, "Worlds", "Aster Reach", "notes", "history.md"),
+      join(sandbox, "world", "notes", "history.md"),
       "# History\n\nA thousand years of rain over Aster Reach.\n",
     );
     await rebuildIndex(fs, index, sandbox);
@@ -50,8 +50,8 @@ describe("index queries over a real eden (§7.3, §7.4)", () => {
     const hits = searchIndex(index, "rain");
     expect(hits).toHaveLength(2);
     expect(hits.map((hit) => hit.path).sort()).toEqual([
-      "Projects/Hollow Crown/manuscript/scene one.md",
-      "Worlds/Aster Reach/notes/history.md",
+      "manuscript/scene one.md",
+      "world/notes/history.md",
     ]);
     expect(hits[0].snippet).toContain(SNIPPET_OPEN);
     expect(hits[0].snippet).toContain(SNIPPET_CLOSE);
@@ -66,14 +66,14 @@ describe("index queries over a real eden (§7.3, §7.4)", () => {
   it("lists files for the switcher", () => {
     const files = listIndexedFiles(index);
     expect(files).toHaveLength(3);
-    expect(files[1].title).toBe("The Long Way Down");
+    expect(files[0].title).toBe("The Long Way Down");
   });
 
   it("lists codex entities with aliases for @ completion", () => {
-    const entities = listIndexedEntities(index);
+    const entities = listEntities(index);
     expect(entities).toEqual([
       {
-        path: "Projects/Hollow Crown/codex/yuki.md",
+        path: "world/codex/yuki.md",
         name: "Yuki Harrow",
         stableId: "ent_yuki",
         entityType: "character",
@@ -86,7 +86,7 @@ describe("index queries over a real eden (§7.3, §7.4)", () => {
   it("finds backlinks", () => {
     expect(getBacklinks(index, "mira")).toEqual([
       {
-        sourcePath: "Projects/Hollow Crown/manuscript/scene one.md",
+        sourcePath: "manuscript/scene one.md",
         kind: "mention",
         line: 6,
       },

@@ -6,10 +6,12 @@ interface ChromeState {
   isPanelOpen: boolean;
   panelWidth: number;
   aboutOpen: boolean;
+  guideOpen: boolean;
   setMaximized: (isMaximized: boolean) => void;
   togglePanel: () => void;
   setPanelWidth: (width: number) => void;
   setAboutOpen: (open: boolean) => void;
+  setGuideOpen: (open: boolean) => void;
 }
 
 export const useChromeStore = create<ChromeState>((set) => ({
@@ -17,8 +19,10 @@ export const useChromeStore = create<ChromeState>((set) => ({
   isPanelOpen: true,
   panelWidth: 280,
   aboutOpen: false,
+  guideOpen: false,
   setMaximized: (isMaximized) => set({ isMaximized }),
   togglePanel: () => set((state) => ({ isPanelOpen: !state.isPanelOpen })),
   setPanelWidth: (panelWidth) => set({ panelWidth }),
   setAboutOpen: (aboutOpen) => set({ aboutOpen }),
+  setGuideOpen: (guideOpen) => set({ guideOpen }),
 }));

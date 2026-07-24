@@ -3,15 +3,19 @@ import { EdenwrightError } from "../errors.js";
 /**
  * Structured-data manifests (SPEC §6.3). JSON on disk, pretty-printed with
  * stable key order so everything diffs cleanly in git.
+ *
+ * One eden = one project = one world: `eden.json` is the only manifest a
+ * current eden has. The legacy `project.json`/`world.json` shapes survive
+ * here solely so `migration.ts` can read pre-collapse edens.
  */
 
-export interface ProjectGoals {
+export interface EdenGoals {
   targetWords?: number;
   dailyWords?: number;
 }
 
-/** `project.json` — one work's manifest (SPEC v2 §4.3, §6). */
-export interface ProjectManifest {
+/** `eden.json` — the one manifest of the one story an eden holds. */
+export interface EdenManifest {
   id: string;
   name: string;
   /** Preset id, e.g. "novel", "manga", "feature-film". */
@@ -20,19 +24,31 @@ export interface ProjectManifest {
   medium: string;
   /** ISO-8601 creation timestamp. */
   createdAt: string;
-  /** World ids this project links, within the same eden. */
-  linkedWorlds: string[];
-  goals: ProjectGoals;
-  /** Ordered structure-node ids at the root of the project tree. */
+  /** Free-form description (carried over from the legacy world on migration). */
+  description: string;
+  goals: EdenGoals;
+  /** Ordered structure-node ids at the root of the story tree. */
   order: string[];
 }
 
-/** `world.json` — a shared-canon container's manifest. */
-export interface WorldManifest {
+/** Legacy `project.json` — read only by the migration path. */
+export interface LegacyProjectManifest {
+  id: string;
+  name: string;
+  preset: string;
+  medium: string;
+  createdAt: string;
+  /** World ids this project links, within the same eden. */
+  linkedWorlds: string[];
+  goals: EdenGoals;
+  order: string[];
+}
+
+/** Legacy `world.json` — read only by the migration path. */
+export interface LegacyWorldManifest {
   id: string;
   name: string;
   description: string;
-  /** ISO-8601 creation timestamp. */
   createdAt: string;
 }
 
@@ -55,17 +71,40 @@ function stringArray(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string");
 }
 
-function parseGoals(value: unknown): ProjectGoals {
+function parseGoals(value: unknown): EdenGoals {
   if (typeof value !== "object" || value === null) return {};
   const raw = value as Record<string, unknown>;
-  const goals: ProjectGoals = {};
+  const goals: EdenGoals = {};
   if (typeof raw.targetWords === "number") goals.targetWords = raw.targetWords;
   if (typeof raw.dailyWords === "number") goals.dailyWords = raw.dailyWords;
   return goals;
 }
 
-/** Parse `project.json` contents. Throws EdenwrightError on bad shape. */
-export function parseProjectManifest(raw: unknown): ProjectManifest {
+/** Parse `eden.json` contents. Throws EdenwrightError on bad shape. */
+export function parseEdenManifest(raw: unknown): EdenManifest {
+  if (typeof raw !== "object" || raw === null) {
+    throw new EdenwrightError(
+      "MANIFEST_INVALID",
+      "eden.json: expected a JSON object",
+    );
+  }
+  const value = raw as Record<string, unknown>;
+  return {
+    id: requireString(value.id, "id", "eden.json"),
+    name: requireString(value.name, "name", "eden.json"),
+    preset: requireString(value.preset, "preset", "eden.json"),
+    medium: requireString(value.medium, "medium", "eden.json"),
+    createdAt: requireString(value.createdAt, "createdAt", "eden.json"),
+    description: optionalString(value.description, ""),
+    goals: parseGoals(value.goals),
+    order: stringArray(value.order),
+  };
+}
+
+/** Parse legacy `project.json` contents. Throws EdenwrightError on bad shape. */
+export function parseLegacyProjectManifest(
+  raw: unknown,
+): LegacyProjectManifest {
   if (typeof raw !== "object" || raw === null) {
     throw new EdenwrightError(
       "MANIFEST_INVALID",
@@ -85,8 +124,8 @@ export function parseProjectManifest(raw: unknown): ProjectManifest {
   };
 }
 
-/** Parse `world.json` contents. Throws EdenwrightError on bad shape. */
-export function parseWorldManifest(raw: unknown): WorldManifest {
+/** Parse legacy `world.json` contents. Throws EdenwrightError on bad shape. */
+export function parseLegacyWorldManifest(raw: unknown): LegacyWorldManifest {
   if (typeof raw !== "object" || raw === null) {
     throw new EdenwrightError(
       "MANIFEST_INVALID",

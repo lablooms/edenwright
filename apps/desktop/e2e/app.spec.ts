@@ -11,6 +11,8 @@ import {
   type Page,
 } from "@playwright/test";
 
+import { createTestEden } from "./helpers";
+
 const appRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 // W3 (founder): an actual app has About, credits, and a manual update check.
@@ -27,10 +29,7 @@ test.describe("W3 — App-iness: Help, About, updates", () => {
       env: { ...process.env, EDENWRIGHT_TEST: "1" },
     });
     page = await app.firstWindow();
-    await page.evaluate(
-      (parent) => window.edenwright.eden.create(parent, "W3 Eden"),
-      sandbox.replace(/\\/g, "/"),
-    );
+    await createTestEden(page, sandbox, "W3 Eden");
     await page.locator(".ew-sidebar").waitFor({ timeout: 30000 });
   });
 

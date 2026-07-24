@@ -256,11 +256,13 @@ function comicRootClass() {
     class {
       constructor(view) {
         this.view = view;
-        view.dom.classList.add("ew-comic-editor");
+        // `cm-ew-plugin-mode` is the mode marker: chrome like the writer
+        // toolbar steps aside while a medium mode owns the editor (R4).
+        view.dom.classList.add("ew-comic-editor", "cm-ew-plugin-mode");
       }
 
       destroy() {
-        this.view.dom.classList.remove("ew-comic-editor");
+        this.view.dom.classList.remove("ew-comic-editor", "cm-ew-plugin-mode");
       }
     },
   );

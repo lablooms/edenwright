@@ -1,0 +1,110 @@
+/* The in-app writing guide (R4) — quiet reference card, tokens only. */
+
+.guide-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ew-scrim);
+  animation: ew-fade-in var(--ew-motion-fast) var(--ew-ease-out);
+}
+
+.guide {
+  display: flex;
+  flex-direction: column;
+  width: min(520px, calc(100vw - 64px));
+  max-height: min(520px, calc(100vh - 96px));
+  background: var(--ew-surface-raised);
+  border: 1px solid var(--ew-border-strong);
+  border-radius: var(--ew-radius-lg);
+  box-shadow: 0 16px 48px var(--ew-scrim);
+  overflow: hidden;
+  animation: ew-pop-in var(--ew-motion-base) var(--ew-ease-out);
+}
+
+.guide__tabs {
+  display: flex;
+  gap: 2px;
+  padding: var(--ew-space-2);
+  border-bottom: 1px solid var(--ew-border);
+}
+
+.guide__tab {
+  padding: var(--ew-space-2) var(--ew-space-3);
+  border: none;
+  border-radius: var(--ew-radius-sm);
+  background: transparent;
+  color: var(--ew-ink-dim);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.guide__tab:hover {
+  color: var(--ew-ink);
+}
+
+.guide__tab[data-active] {
+  background: var(--ew-accent-tint);
+  color: var(--ew-leaf);
+}
+
+.guide__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.guide__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.guide__table td {
+  padding: var(--ew-space-2) var(--ew-space-4);
+  border-bottom: 1px solid var(--ew-border);
+  font-size: 13px;
+}
+
+.guide__action {
+  color: var(--ew-ink);
+}
+
+.guide__keys {
+  color: var(--ew-ink-dim);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.guide__prose {
+  padding: var(--ew-space-4) var(--ew-space-5);
+  overflow: auto;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ew-ink);
+}
+
+.guide__prose p {
+  margin: 0 0 var(--ew-space-3);
+}
+
+.guide__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ew-space-1);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ew-leaf);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.guide__footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--ew-space-3) var(--ew-space-4);
+  border-top: 1px solid var(--ew-border);
+}

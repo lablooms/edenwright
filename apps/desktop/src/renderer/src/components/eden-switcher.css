@@ -1,0 +1,26 @@
+.eden-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ew-space-1);
+  max-width: 240px;
+  margin-left: var(--ew-space-2);
+  padding: var(--ew-space-1) var(--ew-space-2);
+  border-radius: var(--ew-radius-sm);
+  font-size: 13px;
+  color: var(--ew-ink-dim);
+  -webkit-app-region: no-drag;
+  transition:
+    background-color var(--ew-motion-fast) var(--ew-ease-out),
+    color var(--ew-motion-fast) var(--ew-ease-out);
+}
+
+.eden-switcher:hover {
+  background: var(--ew-surface-hover);
+  color: var(--ew-ink);
+}
+
+.eden-switcher__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

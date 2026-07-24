@@ -12,7 +12,7 @@ import { Button, Icon } from "@edenwright/ui";
 
 import type { AppearanceRow } from "../../../preload/api";
 import { lucideByName } from "../lib/icons";
-import { ipcErrorMessage, useAppStore } from "../store";
+import { useAppStore } from "../store";
 import "./codex-sheet.css";
 
 /**
@@ -26,8 +26,6 @@ export function CodexSheet() {
   const setDraft = useAppStore((state) => state.setDraft);
   const saveFile = useAppStore((state) => state.saveFile);
   const setEditSource = useAppStore((state) => state.setEditSource);
-  const worlds = useAppStore((state) => state.worlds);
-  const toast = useAppStore((state) => state.toast);
 
   const parsed = useMemo(
     () => (openFile ? parseEntity(openFile.content) : null),
@@ -118,33 +116,6 @@ export function CodexSheet() {
           <span className="codex-sheet__path">{openFile.path}</span>
         </div>
         <div className="codex-sheet__actions">
-          {openFile.path.startsWith("Projects/") && worlds.length > 0 ? (
-            <select
-              className="codex-sheet__promote"
-              value=""
-              title="Move this entity into a world's shared codex (§7.5)"
-              onChange={(event) => {
-                const world = event.target.value;
-                if (!world) return;
-                void window.edenwright.entities
-                  .promoteToWorld(openFile.path, world)
-                  .then((target) => {
-                    toast(`Promoted to ${world}'s codex.`);
-                    return openFileAt(target);
-                  })
-                  .catch((error: unknown) =>
-                    toast(ipcErrorMessage(error), "warn"),
-                  );
-              }}
-            >
-              <option value="">Promote to world…</option>
-              {worlds.map((world) => (
-                <option key={world.name} value={world.name}>
-                  {world.name}
-                </option>
-              ))}
-            </select>
-          ) : null}
           <Button
             variant="ghost"
             title="Edit the raw markdown source"

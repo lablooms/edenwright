@@ -105,6 +105,11 @@
   width: 110px;
 }
 
+.settings__range {
+  width: 220px;
+  accent-color: var(--ew-leaf);
+}
+
 .settings__check {
   display: flex;
   align-items: center;
@@ -162,10 +167,43 @@
   white-space: nowrap;
 }
 
-.settings__builtin {
-  font-size: 11px;
+.settings__subtabs {
+  display: flex;
+  gap: 2px;
+  width: fit-content;
+  padding: 2px;
+  border: 1px solid var(--ew-border);
+  border-radius: var(--ew-radius-sm);
+}
+
+.settings__subtab {
+  padding: var(--ew-space-1) var(--ew-space-3);
+  border-radius: var(--ew-radius-sm);
+  font-size: 12px;
+  color: var(--ew-ink-dim);
+  transition:
+    background-color var(--ew-motion-fast) var(--ew-ease-out),
+    color var(--ew-motion-fast) var(--ew-ease-out);
+}
+
+.settings__subtab:hover {
+  color: var(--ew-ink);
+}
+
+.settings__subtab[data-active] {
+  background: var(--ew-accent-tint);
   color: var(--ew-leaf);
-  letter-spacing: 0.04em;
+}
+
+.settings__plugin-icon {
+  flex-shrink: 0;
+  color: var(--ew-ink-dim);
+}
+
+.settings__plugin-desc {
+  font-size: 12px;
+  color: var(--ew-ink-dim);
+  line-height: 1.5;
 }
 
 .settings__footer {

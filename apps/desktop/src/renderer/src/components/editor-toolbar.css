@@ -1,0 +1,38 @@
+/* The writer toolbar (R4) — slim, quiet, tokens only. */
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: var(--ew-space-1) var(--ew-space-4);
+  border-bottom: 1px solid var(--ew-border);
+  flex: none;
+}
+
+.editor-toolbar__button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 26px;
+  border: none;
+  border-radius: var(--ew-radius-sm);
+  background: transparent;
+  color: var(--ew-ink-dim);
+  cursor: pointer;
+}
+
+.editor-toolbar__button:hover:not(:disabled) {
+  background: var(--ew-surface-raised);
+  color: var(--ew-ink);
+}
+
+.editor-toolbar__button[data-active] {
+  background: var(--ew-accent-tint);
+  color: var(--ew-leaf);
+}
+
+.editor-toolbar__button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}

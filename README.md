@@ -8,7 +8,7 @@ Made by [Lablooms Studio](https://github.com/lablooms). MIT, everything.
 
 ## The idea
 
-Like Obsidian, but built solely for writers. A project is a tree of Markdown documents, a codex, and a `project.json` — and the difference between a novel, a manga, and a screenplay is **a preset: pure data**. ~20 presets come built in (what your documents are called, which folders appear, which fields stamp). Medium-specific _powers_ — screenplay formatting, comic panel rails, a story canvas, Fountain/Ren'Py exports — are optional community plugins, installed per taste from the community tab.
+Like Obsidian, but built solely for writers. One eden = one story: a plain folder holding a tree of Markdown documents, one `world/` for the codex layer, and an `eden.json` — and the difference between a novel, a manga, and a screenplay is **a preset: pure data**. ~20 presets come built in (what your documents are called, which folders appear, which fields stamp). Medium-specific _powers_ — screenplay formatting, comic panel rails, a story canvas, Fountain/Ren'Py exports — ship as built-in core plugins, on by default.
 
 ## The plain-files promise
 
@@ -16,10 +16,10 @@ Everything you write lives as human-readable Markdown and JSON in a normal folde
 
 ## What's inside
 
-- **The editor** — CodeMirror live preview, `[[wiki-links]]` + `@mentions`, smart typography, focus mode, quick switcher, global search.
-- **Codex & worlds** — typed entity sheets with appearances; shared canon linked across projects; timeline, corkboard, goals & streaks, snapshot history with diffs and restore.
-- **Universal exports** — manuscript Word, EPUB, PDF, clean Markdown, single-file HTML, Markdown zip. Medium serializations (Fountain, FDX, Ren'Py, Twee, comic script) arrive with the Medium Exporters plugin.
-- **Community from day one** — theme system (built-in dark, Light & Quiet in the tab), registry-backed community tab with offline fallback, seed plugins, and [plugin dev docs](docs/plugins/README.md).
+- **The editor** — CodeMirror live preview with a formatting toolbar (no markdown degree required), `[[wiki-links]]` + `@mentions`, spellcheck, typewriter mode, smart typography, focus mode, quick switcher, global search.
+- **The World tab** — typed entity sheets with appearances, one-click creation for characters/places/items/factions/lore; plus timeline, corkboard, goals & streaks, snapshot history with diffs and restore.
+- **Universal exports** — manuscript Word, EPUB, PDF, clean Markdown, single-file HTML, Markdown zip. Medium serializations (Fountain, FDX, Ren'Py, Twee, comic script) come with the built-in Medium Exporters core plugin.
+- **Plugins & themes** — eight first-party core plugins built in, folder-installed plugins with a trust dialog and restricted mode (community plugin shelf coming after beta), and a registry-backed community themes shelf. Plus [plugin dev docs](docs/plugins/README.md).
 
 ## Docs
 

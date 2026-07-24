@@ -2,6 +2,7 @@ import type { FileSystemAdapter } from "./adapters/file-system.js";
 import type { IndexStorageAdapter } from "./adapters/index-storage.js";
 import { deriveFile, kindFromPath } from "./file-model.js";
 import { INDEX_SCHEMA_SQL, INDEX_SCHEMA_VERSION } from "./index-schema.js";
+import { EDEN_WELCOME_FILE } from "./model/eden.js";
 import { joinPath, relativePath } from "./paths.js";
 import { walkFiles } from "./walk.js";
 
@@ -12,8 +13,6 @@ import { walkFiles } from "./walk.js";
  */
 
 const INDEX_IGNORE_DIRS = [".eden", ".git", "exports", "node_modules"];
-/** Eden top-level folders whose children are content containers. */
-const CONTENT_ROOTS = ["Projects", "Worlds"];
 
 /** Minimal timer capability — every supported runtime has setTimeout. */
 declare const setTimeout: (callback: () => void, ms: number) => unknown;
@@ -44,9 +43,9 @@ function todayString(): string {
 
 function containerOf(relPath: string): string {
   const segments = relPath.split("/");
-  // Container = the project/world folder ("Projects/<name>"); loose files
-  // directly under a top-level root belong to the root itself.
-  return segments.length > 2 ? `${segments[0]}/${segments[1]}` : segments[0];
+  // Container = the top-level folder ("world", "chapters"); files loose at
+  // the eden root belong to the root itself.
+  return segments.length > 1 ? segments[0] : ".";
 }
 
 /** Refresh one container's per-day word total after a change (§7.8). */
@@ -167,18 +166,20 @@ export async function rebuildIndex(
     index.run("DELETE FROM daily_words");
   });
 
-  const targets: string[] = [];
-  for (const contentRoot of CONTENT_ROOTS) {
-    const files = await walkFiles(fs, joinPath(edenRoot, contentRoot), {
-      ignoreDirs: INDEX_IGNORE_DIRS,
-      extensions: [".md"],
-    });
-    targets.push(...files);
-  }
+  const targets = await walkFiles(fs, edenRoot, {
+    ignoreDirs: INDEX_IGNORE_DIRS,
+    extensions: [".md"],
+  });
+  // The first-run welcome note is orientation, not writing — its words must
+  // never count toward goals, so it stays out of the index on every path
+  // (rebuild here, incremental in the shell's isContentPath).
+  const indexed = targets.filter(
+    (absPath) => relativePath(edenRoot, absPath) !== EDEN_WELCOME_FILE,
+  );
 
   let done = 0;
   const containers = new Set<string>();
-  for (const absPath of targets) {
+  for (const absPath of indexed) {
     const relPath = relativePath(edenRoot, absPath);
     try {
       await indexFile(fs, index, edenRoot, relPath, { skipDaily: true });
@@ -189,14 +190,14 @@ export async function rebuildIndex(
     }
     done += 1;
     if (done % 25 === 0) {
-      onProgress?.(done, targets.length);
+      onProgress?.(done, indexed.length);
       // Yield so the main process stays responsive on 10k-file edens (§11).
       await new Promise<void>((resolve) => {
         setTimeout(() => resolve(), 0);
       });
     }
   }
-  onProgress?.(done, targets.length);
+  onProgress?.(done, indexed.length);
 
   // One daily-total refresh per container, not per file (§7.8, §11 budgets).
   for (const container of containers) {

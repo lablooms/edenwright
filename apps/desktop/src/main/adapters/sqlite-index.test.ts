@@ -70,15 +70,15 @@ describe("rebuildIndex over real files (SPEC §12 M1)", () => {
   async function plantEden(): Promise<void> {
     // The adapter creates parent directories and writes atomically.
     await fs.writeFile(
-      join(sandbox, "Projects", "Hollow Crown", "manuscript", "scene one.md"),
+      join(sandbox, "manuscript", "scene one.md"),
       '---\nid: scn_1\ntitle: "The Long Way Down"\n---\nYuki met [[The Gray Fox]]. @mira watched.\n',
     );
     await fs.writeFile(
-      join(sandbox, "Projects", "Hollow Crown", "codex", "yuki.md"),
+      join(sandbox, "world", "codex", "yuki.md"),
       '---\nid: ent_yuki\ntype: character\nname: "Yuki Harrow"\n---\nBackstory.\n',
     );
     await fs.writeFile(
-      join(sandbox, "Worlds", "Aster Reach", "notes", "history.md"),
+      join(sandbox, "world", "notes", "history.md"),
       "# History\n\nA thousand years of rain.\n",
     );
   }
@@ -92,11 +92,11 @@ describe("rebuildIndex over real files (SPEC §12 M1)", () => {
       "SELECT path, kind, stable_id, title, word_count FROM files ORDER BY path",
     );
     expect(files.map((row) => row.path)).toEqual([
-      "Projects/Hollow Crown/codex/yuki.md",
-      "Projects/Hollow Crown/manuscript/scene one.md",
-      "Worlds/Aster Reach/notes/history.md",
+      "manuscript/scene one.md",
+      "world/codex/yuki.md",
+      "world/notes/history.md",
     ]);
-    expect(files[0]).toMatchObject({
+    expect(files[1]).toMatchObject({
       kind: "codex",
       stable_id: "ent_yuki",
       title: "Yuki Harrow",
@@ -119,7 +119,7 @@ describe("rebuildIndex over real files (SPEC §12 M1)", () => {
       "SELECT path FROM files_fts WHERE files_fts MATCH ?",
       ["rain"],
     );
-    expect(fts).toEqual([{ path: "Worlds/Aster Reach/notes/history.md" }]);
+    expect(fts).toEqual([{ path: "world/notes/history.md" }]);
   });
 
   it("deleting index.db is a non-event: a fresh database rebuilds identically", async () => {

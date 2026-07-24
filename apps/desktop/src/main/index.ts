@@ -14,11 +14,11 @@ import { RecentEdensStore } from "./recent-edens.js";
 const isMac = process.platform === "darwin";
 
 // e2e runs get a throwaway userData so tests never touch real app state.
+// Relaunch specs pin it through the env so recents survive an app restart.
 if (process.env.EDENWRIGHT_TEST === "1") {
-  const testUserData = join(
-    app.getPath("temp"),
-    `edenwright-test-userdata-${process.pid}`,
-  );
+  const testUserData =
+    process.env.EDENWRIGHT_USERDATA ??
+    join(app.getPath("temp"), `edenwright-test-userdata-${process.pid}`);
   mkdirSync(testUserData, { recursive: true });
   app.setPath("userData", testUserData);
 }
@@ -57,9 +57,15 @@ function createMainWindow(): void {
       sandbox: false,
       contextIsolation: true,
       nodeIntegration: false,
+      // Built-in spellchecker (R4); the Settings toggle flips it live.
+      spellcheck: true,
     },
   });
   mainWindow = window;
+
+  // Follow the app locale would need a language pack story; fixed en-US
+  // until then (Electron ships hunspell dictionaries per locale).
+  window.webContents.session.setSpellCheckerLanguages(["en-US"]);
 
   window.on("closed", () => {
     if (mainWindow === window) mainWindow = null;
@@ -116,11 +122,17 @@ function registerWindowIpc(): void {
   ipcMain.handle("window:toggle-devtools", (event) => {
     BrowserWindow.fromWebContents(event.sender)?.webContents.toggleDevTools();
   });
+
+  ipcMain.handle("app:set-spellcheck", (event, enabled: boolean) => {
+    BrowserWindow.fromWebContents(
+      event.sender,
+    )?.webContents.session.setSpellCheckerEnabled(Boolean(enabled));
+  });
 }
 
 let finalSnapshotTaken = false;
 
-void app.whenReady().then(() => {
+void app.whenReady().then(async () => {
   edenService.setEventSink((event) => {
     mainWindow?.webContents.send("eden:event", event);
   });
@@ -134,6 +146,14 @@ void app.whenReady().then(() => {
     adapters.shell,
   );
   createMainWindow();
+
+  // Auto-reopen: the launcher is for first runs and explicit switches — a
+  // returning writer lands straight back in their last eden. list() prunes
+  // dead folders, and a failed open just leaves the launcher up.
+  const [mostRecent] = await recents.list();
+  if (mostRecent) {
+    await edenService.open(mostRecent.path).catch(() => undefined);
+  }
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createMainWindow();

@@ -25,16 +25,26 @@ try {
     env: { ...process.env, EDENWRIGHT_TEST: "1" },
   });
   const page = await app.firstWindow();
+  // One eden = one story: create takes the preset input; scaffold at root.
   await page.evaluate(
-    (parent) => window.edenwright.eden.create(parent, "Packaged Eden"),
-    sandbox.replace(/\\/g, "/"),
+    ([parent, input]) =>
+      window.edenwright.eden.create(parent, "Packaged Eden", input),
+    [
+      sandbox.replace(/\\/g, "/"),
+      {
+        preset: "novel",
+        medium: "prose",
+        scaffold: [{ path: "manuscript" }, { path: "notes" }],
+      },
+    ],
   );
   await page.evaluate(() => window.edenwright.test.whenRebuilt());
   await page.evaluate(
     ([path, text]) => window.edenwright.files.write(path, text, null),
-    ["Projects/hello.md", "# It works\n\nA packaged app just wrote this.\n"],
+    ["manuscript/hello.md", "# It works\n\nA packaged app just wrote this.\n"],
   );
   const stats = await page.evaluate(() => window.edenwright.test.indexStats());
+  // Exactly 1: the welcome note is orientation and stays out of the index.
   if (stats.files !== 1) {
     throw new Error(`index counted ${stats.files} files, expected 1`);
   }

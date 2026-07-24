@@ -5,24 +5,6 @@
   min-height: 0;
 }
 
-.files-panel__eden {
-  display: flex;
-  align-items: center;
-  gap: var(--ew-space-2);
-  padding: var(--ew-space-3) var(--ew-space-3) var(--ew-space-2);
-  border-bottom: 1px solid var(--ew-border);
-}
-
-.files-panel__eden-name {
-  flex: 1;
-  min-width: 0;
-  font-weight: 500;
-  font-size: 13px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .files-panel__toolbar {
   display: flex;
   align-items: center;

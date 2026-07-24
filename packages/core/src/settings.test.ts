@@ -40,6 +40,16 @@ describe("parseEdenSettings", () => {
     expect(parsed.snapshots.maxTotalBytes).toBe(500 * 1024 * 1024);
   });
 
+  it("fills R4 fields with defaults for pre-R4 settings files", () => {
+    // An eden written before the comfort settings existed must load fine.
+    const parsed = parseEdenSettings({
+      editor: { fontFamily: "literata", fontSize: 17, smartTypography: true },
+    });
+    expect(parsed.editor.lineWidth).toBe(72);
+    expect(parsed.editor.spellcheck).toBe(true);
+    expect(parsed.editor.typewriterMode).toBe(false);
+  });
+
   it("drops wrong-typed values back to defaults", () => {
     const parsed = parseEdenSettings({
       editor: { fontSize: "huge" },
@@ -49,5 +59,14 @@ describe("parseEdenSettings", () => {
     expect(parsed.snapshots.maxTotalBytes).toBe(
       DEFAULT_EDEN_SETTINGS.snapshots.maxTotalBytes,
     );
+  });
+
+  it("defaults coreDisabled to empty (core plugins ON) and keeps disables", () => {
+    // Pre-R5 settings files have no coreDisabled — everything stays on.
+    expect(parseEdenSettings({}).plugins.coreDisabled).toEqual([]);
+    const parsed = parseEdenSettings({
+      plugins: { coreDisabled: ["lablooms.sprints", 42] },
+    });
+    expect(parsed.plugins.coreDisabled).toEqual(["lablooms.sprints"]);
   });
 });

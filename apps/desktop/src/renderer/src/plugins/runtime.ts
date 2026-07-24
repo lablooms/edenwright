@@ -22,6 +22,7 @@ import type { EdenwrightApi } from "../../../preload/api";
 import type { ModalOptions } from "@edenwright/plugin-api";
 import { useAppStore } from "../store";
 import { usePluginStore, type DiscoveredPlugin } from "./plugin-store";
+import { listCorePlugins, readCorePluginFile } from "./core-plugins";
 
 interface ActivePlugin {
   manifest: PluginManifest;
@@ -84,33 +85,78 @@ export class PluginRuntime {
     });
   }
 
-  /** Discover + reconcile loaded plugins with the eden's settings (§9.3). */
+  private syncInFlight = false;
+  private syncQueued = false;
+
+  /**
+   * Discover + reconcile loaded plugins with the eden's settings (§9.3).
+   * The load set is (a) core plugins read straight from the app bundle —
+   * first-party, on by default, no trust prompt — and (b) trusted folder
+   * plugins from .eden/plugins/. Restricted mode silences only the folder
+   * ones; core plugins are ours and stay on (R5).
+   *
+   * Re-entrant calls collapse: syncs can arrive together (eden-opened,
+   * settings-changed, the App's eden-path effect) and two concurrent runs
+   * could double-load a plugin, so a call during a run queues exactly one
+   * follow-up.
+   */
   async syncFromSettings(): Promise<void> {
+    if (this.syncInFlight) {
+      this.syncQueued = true;
+      return;
+    }
+    this.syncInFlight = true;
+    try {
+      await this.syncOnce();
+    } finally {
+      this.syncInFlight = false;
+      if (this.syncQueued) {
+        this.syncQueued = false;
+        await this.syncFromSettings();
+      }
+    }
+  }
+
+  private async syncOnce(): Promise<void> {
     const appStore = useAppStore.getState();
     const pluginStore = usePluginStore.getState();
     const settings = appStore.edenState?.current?.settings;
     if (!settings) return;
 
-    const discovered = await this.discover();
+    const [core, discovered] = await Promise.all([
+      listCorePlugins(),
+      this.discover(),
+    ]);
     pluginStore.setDiscovered(discovered);
 
-    if (settings.plugins.restrictedMode) {
-      // Restricted mode silences every community plugin (§9.3).
-      for (const id of [...this.active.keys()]) {
-        await this.disable(id);
+    const coreIds = new Set(core.map((entry) => entry.manifest.id));
+    const wantedCore = core.filter(
+      (entry) => !settings.plugins.coreDisabled.includes(entry.manifest.id),
+    );
+    // A folder plugin shadowing a core id never loads twice — core wins.
+    const wantedFolderIds = settings.plugins.restrictedMode
+      ? []
+      : settings.plugins.enabled.filter((id) => !coreIds.has(id));
+
+    for (const entry of wantedCore) {
+      if (!this.active.has(entry.manifest.id)) {
+        await this.enable(entry.manifest, entry.dir);
       }
-      return;
     }
 
-    for (const id of settings.plugins.enabled) {
+    for (const id of wantedFolderIds) {
       if (this.active.has(id)) continue;
       const entry = discovered.find((item) => item.manifest?.id === id);
       if (!entry?.manifest) continue;
       await this.enableWithTrust(entry.manifest);
     }
 
+    const wantedIds = new Set([
+      ...wantedCore.map((entry) => entry.manifest.id),
+      ...wantedFolderIds,
+    ]);
     for (const id of [...this.active.keys()]) {
-      if (!settings.plugins.enabled.includes(id)) {
+      if (!wantedIds.has(id)) {
         await this.disable(id);
       }
     }
@@ -156,16 +202,28 @@ export class PluginRuntime {
     await this.enable(manifest);
   }
 
-  private async enable(manifest: PluginManifest): Promise<void> {
+  /**
+   * Load a plugin's payload and bring it up. Core plugins pass their seed
+   * directory and are read from the app bundle; folder plugins read from
+   * .eden/plugins/<id>/.
+   */
+  private async enable(
+    manifest: PluginManifest,
+    coreDir?: string,
+  ): Promise<void> {
     if (this.active.has(manifest.id)) return;
     const appStore = useAppStore.getState();
     const disposables: Disposable[] = [];
+    const readPayload = (fileName: string): Promise<string> =>
+      coreDir
+        ? readCorePluginFile(coreDir, fileName)
+        : this.deps.bridge.pluginfs.read(
+            `.eden/plugins/${manifest.id}/${fileName}`,
+          );
 
     let code: string;
     try {
-      code = await this.deps.bridge.pluginfs.read(
-        `.eden/plugins/${manifest.id}/main.js`,
-      );
+      code = await readPayload("main.js");
     } catch {
       appStore.toast(`${manifest.name}: no main.js inside.`, "warn");
       return;
@@ -173,9 +231,7 @@ export class PluginRuntime {
 
     let styleElement: HTMLStyleElement | null = null;
     try {
-      const css = await this.deps.bridge.pluginfs.read(
-        `.eden/plugins/${manifest.id}/styles.css`,
-      );
+      const css = await readPayload("styles.css");
       styleElement = document.createElement("style");
       styleElement.dataset.plugin = manifest.id;
       styleElement.textContent = css;
@@ -333,7 +389,7 @@ export class PluginRuntime {
       appVersion: this.appVersionCache ?? "0.1.0-beta",
       manifest,
       eden: {
-        // Lazy: the community tab is reachable before any eden opens.
+        // Lazy: settings are reachable before any eden opens.
         get rootPath() {
           return useAppStore.getState().edenState?.current?.info.path ?? "";
         },
@@ -411,7 +467,9 @@ export class PluginRuntime {
         listEntities: async (containerPath) =>
           (await bridge.query.entities())
             .filter((entity) =>
-              containerPath ? entity.path.startsWith(containerPath) : true,
+              containerPath && containerPath !== "."
+                ? entity.path.startsWith(containerPath)
+                : true,
             )
             .map((entity) => ({
               path: entity.path,

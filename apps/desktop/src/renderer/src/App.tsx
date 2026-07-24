@@ -9,7 +9,6 @@ import {
   type SidebarItem,
 } from "@edenwright/ui";
 import {
-  BookOpen,
   Files,
   Globe,
   Palette as PaletteIcon,
@@ -18,25 +17,24 @@ import {
   Settings,
 } from "lucide-react";
 
-import { CodexPanel } from "./components/codex-panel";
 import { CorkboardView } from "./components/corkboard-view";
 import { DetailsPanel } from "./components/details-panel";
+import { EdenSwitcher } from "./components/eden-switcher";
 import { ExportModal } from "./components/export-modal";
 import { FilesPanel } from "./components/files-panel";
 import { HelpMenu } from "./components/help-menu";
+import { Launcher } from "./components/launcher";
 import { ModalHost } from "./components/modal-host";
-import { NewProjectModal } from "./components/new-project-modal";
 import { Palette } from "./components/palette";
 import { PluginViewHost } from "./components/plugin-view-host";
 import { SearchPanel } from "./components/search-panel";
 import { ThemesPanel } from "./components/themes-panel";
-import { WorldsPanel } from "./components/worlds-panel";
 import { SettingsModal } from "./components/settings-modal";
 import { StatusBar } from "./components/status-bar";
 import { TimelineView } from "./components/timeline-view";
 import { Toasts } from "./components/toasts";
 import { Viewer } from "./components/viewer";
-import { WelcomeView } from "./components/welcome";
+import { WorldPanel } from "./components/world-panel";
 import { lucideByName } from "./lib/icons";
 import { pluginRuntime } from "./plugins/runtime";
 import { usePluginStore } from "./plugins/plugin-store";
@@ -46,13 +44,12 @@ import { useThemeStore } from "./themes/theme-store";
 import { checkForUpdates } from "./updates";
 import { universalExporter } from "./plugins/universal-exporter";
 
-// Rail: Files, Search, Plugins, Settings live; the rest report their
-// milestone. Vocabulary law (§3.4): only "codex" carries the brand lexicon.
+// Rail: Files, Search, World live; Plugins/Themes/Settings sit at the
+// bottom. Vocabulary law (§3.4): plain English, "world" is not a brand word.
 const TOP_ITEMS: SidebarItem[] = [
   { id: "files", icon: Files, title: "Files" },
   { id: "search", icon: Search, title: "Search — Ctrl/Cmd-Shift-F" },
-  { id: "codex", icon: BookOpen, title: "Codex" },
-  { id: "worlds", icon: Globe, title: "Worlds" },
+  { id: "world", icon: Globe, title: "World" },
 ];
 
 const BOTTOM_ITEMS: SidebarItem[] = [
@@ -125,6 +122,16 @@ export function App() {
     };
   }, [bridge, init, handleEdenEvent]);
 
+  // The eden-opened event can fire before this renderer is listening
+  // (startup auto-reopen, bridge-driven creates) — so the runtime also
+  // syncs whenever the store learns an eden is open (R5).
+  const openEdenPath = useAppStore(
+    (state) => state.edenState?.current?.info.path ?? null,
+  );
+  useEffect(() => {
+    if (openEdenPath) void pluginRuntime.syncFromSettings();
+  }, [openEdenPath]);
+
   useEffect(() => {
     let disposed = false;
     void bridge.window.isMaximized().then((value) => {
@@ -136,6 +143,15 @@ export function App() {
       unsubscribe();
     };
   }, [bridge, setMaximized]);
+
+  // The spellchecker is an Electron session switch; keep it in lockstep
+  // with the eden's editor settings (default ON, R4).
+  const spellcheck = useAppStore(
+    (state) => state.edenState?.current?.settings.editor.spellcheck ?? true,
+  );
+  useEffect(() => {
+    void bridge.app.setSpellcheck(spellcheck);
+  }, [bridge, spellcheck]);
 
   // Global hotkeys (§7.3, §7.2): switcher, global search, focus mode.
   useEffect(() => {
@@ -186,8 +202,7 @@ export function App() {
 
   const onSidebarSelect = (id: string) => {
     if (id === "files") setSideView("files");
-    else if (id === "codex") setSideView("codex");
-    else if (id === "worlds") setSideView("worlds");
+    else if (id === "world") setSideView("world");
     else if (id === "themes") setSideView("themes");
     else if (id === "search") useAppStore.getState().bumpSearchFocus();
     else if (id === "plugins") {
@@ -211,6 +226,7 @@ export function App() {
         onClose={() => void bridge.window.close()}
         onTogglePanel={togglePanel}
         menu={<HelpMenu />}
+        switcher={edenOpen ? <EdenSwitcher /> : undefined}
         onBadgeClick={() => useChromeStore.getState().setAboutOpen(true)}
       />
       <div className="app-shell__body">
@@ -229,10 +245,8 @@ export function App() {
                 <PluginViewHost viewId={activeViewId} />
               ) : sideView === "search" ? (
                 <SearchPanel />
-              ) : sideView === "codex" ? (
-                <CodexPanel />
-              ) : sideView === "worlds" ? (
-                <WorldsPanel />
+              ) : sideView === "world" ? (
+                <WorldPanel />
               ) : sideView === "themes" ? (
                 <ThemesPanel />
               ) : (
@@ -258,14 +272,13 @@ export function App() {
               <Viewer />
             )
           ) : (
-            <WelcomeView />
+            <Launcher />
           )}
         </PanelLayout>
       </div>
       <StatusBar />
       <Palette />
       <SettingsModal />
-      <NewProjectModal />
       <ExportModal />
       <ModalHost />
       <Toasts />

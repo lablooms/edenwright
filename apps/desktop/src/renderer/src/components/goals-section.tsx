@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type {
   CorkboardRow,
-  ProjectInfo,
+  EdenManifestInfo,
   TimelineRow,
 } from "../../../preload/api";
 import { ipcErrorMessage, useAppStore } from "../store";
@@ -36,17 +36,16 @@ function ProgressBar({
 }
 
 /** Goals & streaks (§7.8): targets, today's pace, streak, per-day chart. */
-export function GoalsSection({ project }: { project: ProjectInfo }) {
+export function GoalsSection({ manifest }: { manifest: EdenManifestInfo }) {
   const toast = useAppStore((state) => state.toast);
-  const refreshProjects = useAppStore((state) => state.refreshProjects);
+  const refreshManifest = useAppStore((state) => state.refreshManifest);
   const openFile = useAppStore((state) => state.openFile);
 
   const [stats, setStats] = useState<Stats | null>(null);
-  const container = `Projects/${project.name}`;
-
+  // One eden = one story: goals count every word in the eden (".").
   const load = useCallback(() => {
-    void window.edenwright.query.stats(container, 35).then(setStats);
-  }, [container]);
+    void window.edenwright.query.stats(".", 35).then(setStats);
+  }, []);
   useEffect(load, [load, openFile?.mtimeMs]);
 
   const streak = useMemo(() => {
@@ -69,17 +68,18 @@ export function GoalsSection({ project }: { project: ProjectInfo }) {
     dailyWords?: number;
   }) => {
     try {
-      await window.edenwright.projects.update(project.name, {
-        goals: { ...project.goals, ...patch },
+      await window.edenwright.eden.saveManifest({
+        ...manifest,
+        goals: { ...manifest.goals, ...patch },
       });
-      await refreshProjects();
+      await refreshManifest();
     } catch (error) {
       toast(ipcErrorMessage(error), "warn");
     }
   };
 
-  const target = project.goals.targetWords ?? 0;
-  const daily = project.goals.dailyWords ?? 0;
+  const target = manifest.goals.targetWords ?? 0;
+  const daily = manifest.goals.dailyWords ?? 0;
 
   return (
     <section className="ew-goals">
@@ -159,7 +159,7 @@ export function GoalsSection({ project }: { project: ProjectInfo }) {
 }
 
 /** Serial schedule view (§7.8): planned (storyDate) vs. published (status). */
-export function ScheduleSection({ project }: { project: ProjectInfo }) {
+export function ScheduleSection({ manifest }: { manifest: EdenManifestInfo }) {
   const openFileAt = useAppStore((state) => state.openFileAt);
   const [chapters, setChapters] = useState<
     {
@@ -171,9 +171,8 @@ export function ScheduleSection({ project }: { project: ProjectInfo }) {
   >([]);
 
   useEffect(() => {
-    const container = `Projects/${project.name}`;
     void Promise.all([
-      window.edenwright.query.corkboard(container),
+      window.edenwright.query.corkboard(),
       window.edenwright.query.timeline(),
     ]).then(([cards, dated]) => {
       const dates = new Map(
@@ -181,8 +180,7 @@ export function ScheduleSection({ project }: { project: ProjectInfo }) {
       );
       setChapters(
         cards
-          .filter((card: CorkboardRow) => card.container === container)
-          .map((card) => ({
+          .map((card: CorkboardRow) => ({
             path: card.path,
             title: card.title,
             storyDate: dates.get(card.path) ?? null,
@@ -193,7 +191,7 @@ export function ScheduleSection({ project }: { project: ProjectInfo }) {
           ),
       );
     });
-  }, [project.name]);
+  }, [manifest.id]);
 
   if (chapters.length === 0) return null;
 

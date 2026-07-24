@@ -85,14 +85,17 @@ const walkMarkdown = async (fs, dir, out = []) => {
   for (const entry of entries) {
     const path = `${dir}/${entry.name}`;
     if (entry.kind === "directory") {
-      // Old exports are not source material.
-      if (entry.name !== "exports") await walkMarkdown(fs, path, out);
+      // Machine dirs and old exports are not source material.
+      if (!SKIP_DIRS.has(entry.name)) await walkMarkdown(fs, path, out);
     } else if (entry.name.toLowerCase().endsWith(".md")) {
       out.push(path);
     }
   }
   return out;
 };
+
+// The export root is the eden itself — never walk its machine dirs.
+const SKIP_DIRS = new Set([".eden", ".git", "exports", "node_modules"]);
 
 const sanitize = (name) =>
   name.replace(/[\\/:*?"<>|]/g, "-").replace(/\s+/g, "-");
@@ -111,8 +114,14 @@ async function collectSections(fs, projectPath) {
   return sections;
 }
 
-const projectNameOf = (projectPath) =>
-  projectPath.split("/").filter(Boolean).pop() ?? "project";
+/** The shell passes the eden's name; the path root ("." ) has none. */
+const projectNameOf = (context) =>
+  context.projectName ??
+  context.projectPath
+    .split("/")
+    .filter((segment) => segment && segment !== ".")
+    .pop() ??
+  "eden";
 
 /* --------------------------------------------------------------------
  * Screenplay element inference (SPEC §8.3, ported from v1
@@ -821,7 +830,7 @@ const screenplayExporter = {
   ],
   async run(format, context) {
     const sections = await collectSections(context.fs, context.projectPath);
-    const projectName = projectNameOf(context.projectPath);
+    const projectName = projectNameOf(context);
     const input = { projectName, sections };
     const base = `${context.outputDir}/${sanitize(projectName)}`;
 
@@ -855,7 +864,7 @@ const comicExporter = {
   ],
   async run(format, context) {
     const sections = await collectSections(context.fs, context.projectPath);
-    const projectName = projectNameOf(context.projectPath);
+    const projectName = projectNameOf(context);
     const input = { projectName, sections };
     const base = `${context.outputDir}/${sanitize(projectName)}`;
 
@@ -905,7 +914,7 @@ const interactiveExporter = {
       });
     }
 
-    const projectName = projectNameOf(context.projectPath);
+    const projectName = projectNameOf(context);
     const input = { projectName, graph, nodes };
     const base = `${context.outputDir}/${sanitize(projectName)}`;
 

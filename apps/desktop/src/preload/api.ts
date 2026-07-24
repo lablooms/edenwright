@@ -23,12 +23,51 @@ export interface WindowControls {
 export interface RecentEden {
   name: string;
   path: string;
-  lastOpenedAtMs: number;
+  /** Preset id when known — entries from before R2 may lack every detail. */
+  preset?: string;
+  medium?: string;
+  /** ISO time of the last open; absent means "unknown", not "broken". */
+  lastOpenedAt?: string;
+}
+
+export interface EdenGoalsInfo {
+  targetWords?: number;
+  dailyWords?: number;
+}
+
+/** eden.json — one eden = one project = one world, so this is all three. */
+export interface EdenManifestInfo {
+  id: string;
+  name: string;
+  /** Preset id, e.g. "novel", "manga". */
+  preset: string;
+  /** The preset's medium tag (denormalized for exporter/plugin joins). */
+  medium: string;
+  createdAt: string;
+  description: string;
+  goals: EdenGoalsInfo;
+  /** Ordered structure-node ids at the root of the story tree. */
+  order: string[];
+}
+
+export interface ScaffoldEntryInput {
+  /** Eden-relative path (folder when `contents` is omitted). */
+  path: string;
+  contents?: string;
+}
+
+/** What creating an eden needs: the preset's identity plus its scaffold. */
+export interface CreateEdenInput {
+  preset: string;
+  medium: string;
+  scaffold: ScaffoldEntryInput[];
+  description?: string;
 }
 
 export interface OpenEdenInfo {
   info: { name: string; path: string };
   settings: EdenSettings;
+  manifest: EdenManifestInfo;
 }
 
 export interface EdenStateInfo {
@@ -71,12 +110,22 @@ export type EdenEventPayload =
 
 export interface EdenApi {
   state(): Promise<EdenStateInfo>;
-  create(parentDir: string, name: string): Promise<EdenStateInfo>;
+  create(
+    parentDir: string,
+    name: string,
+    input: CreateEdenInput,
+  ): Promise<EdenStateInfo>;
   open(path: string): Promise<EdenStateInfo>;
   close(): Promise<void>;
-  /** Native folder picker for the welcome flow; null when cancelled. */
+  /** Forget a recents entry (files are never touched); resolves the list. */
+  removeRecent(path: string): Promise<RecentEden[]>;
+  /** Native folder picker for the launcher flows; null when cancelled. */
   pickDirectory(title?: string): Promise<string | null>;
   tree(): Promise<TreeNode[]>;
+  /** The open eden's manifest (eden.json). */
+  manifest(): Promise<EdenManifestInfo>;
+  /** Persist eden.json (goals, order, description). */
+  saveManifest(manifest: EdenManifestInfo): Promise<void>;
   /** Persist settings.json (applies live; emits settings-changed). */
   saveSettings(settings: EdenSettings): Promise<void>;
   /** Subscribe to eden events; returns an unsubscribe. */
@@ -92,27 +141,6 @@ export interface PluginsApi {
   discover(): Promise<DiscoveredPluginDir[]>;
   /** Copy a plugin folder into .eden/plugins/<id>/; resolves the new id. */
   installFromFolder(sourceDir: string): Promise<string>;
-}
-
-export interface CreateProjectInput {
-  name: string;
-  /** Preset id from the gallery (core's BUILTIN_PRESETS or a plugin's). */
-  preset: string;
-  /** The preset's medium tag (denormalized into project.json). */
-  medium: string;
-  /** Folders/files stamped from the preset. */
-  scaffold: { path: string; contents?: string }[];
-}
-
-export interface ProjectInfo {
-  id: string;
-  name: string;
-  preset: string;
-  medium: string;
-  createdAt: string;
-  linkedWorlds: string[];
-  goals: { targetWords?: number; dailyWords?: number };
-  order: string[];
 }
 
 export interface SnapshotVersionInfo {
@@ -135,6 +163,8 @@ export interface AppApi {
   openExternal(url: string): Promise<void>;
   /** Read a bundled first-party seed file (plugins/seed/, themes/ only). */
   readBundled(relPath: string): Promise<string>;
+  /** Flip the built-in spellchecker (Settings → Editor, R4). */
+  setSpellcheck(enabled: boolean): Promise<void>;
 }
 
 export interface HistoryApi {
@@ -144,38 +174,6 @@ export interface HistoryApi {
   readVersion(snapshotName: string, relPath: string): Promise<string | null>;
   /** Snapshot the present, then write the old version (never rewrites history). */
   restore(snapshotName: string, relPath: string): Promise<WriteResult>;
-}
-
-export interface ProjectsApi {
-  create(input: CreateProjectInput): Promise<ProjectInfo>;
-  list(): Promise<ProjectInfo[]>;
-  update(
-    name: string,
-    patch: {
-      linkedWorlds?: string[];
-      goals?: { targetWords?: number; dailyWords?: number };
-      order?: string[];
-    },
-  ): Promise<ProjectInfo>;
-}
-
-export interface EntitiesApi {
-  /** Entities visible from a project: its codex + linked worlds' (§7.5). */
-  forProject(projectName: string): Promise<EntitySummary[]>;
-  /** Promote a project-local entity into a world's codex. */
-  promoteToWorld(entityRelPath: string, worldName: string): Promise<string>;
-}
-
-export interface WorldInfo {
-  id: string;
-  name: string;
-  description: string;
-  createdAt: string;
-}
-
-export interface WorldsApi {
-  create(name: string): Promise<WorldInfo>;
-  list(): Promise<WorldInfo[]>;
 }
 
 /** File access scoped to the open eden (the plugin API's fs, §9.2). */
@@ -231,7 +229,10 @@ export interface EntitySummary {
   stableId: string | null;
   entityType: string | null;
   aliases: string[];
-  /** World name when the entity comes from a linked world, else null. */
+  /**
+   * Legacy world name when the entity lives in an archived world
+   * (`world/archived-worlds/<name>/`), else null.
+   */
   world: string | null;
 }
 
@@ -293,7 +294,8 @@ export interface QueryApi {
   timeline(): Promise<TimelineRow[]>;
   /** Corkboard cards (§7.7): title/synopsis/status per file. */
   corkboard(containerPrefix?: string): Promise<CorkboardRow[]>;
-  /** Goals & streaks data (§7.8): totals plus a per-day series. */
+  /** Goals & streaks data (§7.8): totals plus a per-day series.
+   * The container is a top-level folder; "." means the whole eden. */
   stats(
     container: string,
     days?: number,
@@ -322,9 +324,6 @@ export interface EdenwrightApi {
   query: QueryApi;
   plugins: PluginsApi;
   pluginfs: PluginFsApi;
-  projects: ProjectsApi;
-  worlds: WorldsApi;
-  entities: EntitiesApi;
   history: HistoryApi;
   exporter: ExportApi;
   test?: TestApi;

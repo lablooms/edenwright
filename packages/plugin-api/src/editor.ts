@@ -12,9 +12,9 @@ import type { Disposable } from "./disposable.js";
 export interface EditorExtensionContext {
   /** Eden-relative path of the file in this editor. */
   filePath: string;
-  /** The owning project preset's medium tag, when the file is in a project. */
+  /** The eden preset's medium tag (one eden = one story = one preset). */
   medium: string | null;
-  /** The owning project preset's id, when the file is in a project. */
+  /** The eden preset's id. */
   preset: string | null;
 }
 
@@ -26,6 +26,12 @@ export interface EditorRegistry {
   /**
    * Register a CM6 extension for every editor, or a factory computed per
    * editor — return null to sit that editor out (medium gating).
+   *
+   * If your extension is a full editor MODE that owns formatting (element
+   * cycling, page/panel layouts), tag the editor DOM with the
+   * `cm-ew-plugin-mode` class — e.g.
+   * `EditorView.editorAttributes.of({ class: "cm-ew-plugin-mode" })` — and
+   * built-in chrome like the writer formatting toolbar steps aside.
    */
   registerExtension(extension: Extension | EditorExtensionFactory): Disposable;
 }

@@ -3,9 +3,9 @@ import { kindFromPath, parseMarkdown, walkFiles } from "@edenwright/core";
 
 /**
  * The shared content model behind every export: ordered sections from a
- * container (project or world), addressed adapter-relative. Frontmatter
- * stays available (POV, status, storyDate) but never prints as YAML in
- * reader-facing formats.
+ * container (the eden root, or one folder of it), addressed adapter-relative.
+ * Frontmatter stays available (POV, status, storyDate) but never prints as
+ * YAML in reader-facing formats.
  */
 
 export interface ExportSection {
@@ -23,7 +23,7 @@ const DEFAULT_IGNORE = [".eden", ".git", "exports", "node_modules"];
 
 /**
  * Collect markdown sections from a directory tree, adapter-relative.
- * `order` (paths from project.json) wins; the rest sort by path.
+ * `order` (paths from eden.json) wins; the rest sort by path.
  */
 export async function collectSections(
   fs: FileSystemAdapter,

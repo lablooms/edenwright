@@ -7,7 +7,7 @@ import { EdenwrightError } from "@edenwright/core";
 
 /**
  * Bundled first-party seeds (SPEC v2 §7): `plugins/seed/` and `themes/`
- * ship inside the app, so the community tab's first-party installs work
+ * ship inside the app, so core plugins load and seed-theme installs work
  * offline. Reads are allow-listed to those two roots — never a free path.
  */
 

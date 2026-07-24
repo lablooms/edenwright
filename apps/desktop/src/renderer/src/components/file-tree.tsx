@@ -1,24 +1,16 @@
 import { useState } from "react";
 
-import type { PresetDefinition } from "@edenwright/plugin-api";
-
-import type { ProjectInfo, TreeNode, WorldInfo } from "../../../preload/api";
+import type { TreeNode } from "../../../preload/api";
 import { ipcErrorMessage, useAppStore } from "../store";
 import "./file-tree.css";
-
-interface FileTreeProps {
-  projects: ProjectInfo[];
-  worlds: WorldInfo[];
-  presets: PresetDefinition[];
-}
 
 interface DragState {
   dragging: string | null;
   overDir: string | null;
 }
 
-/** The eden's file tree: Projects/ and Worlds/, directories first. */
-export function FileTree({ projects, worlds, presets }: FileTreeProps) {
+/** The eden's file tree, rooted at the eden root; directories first. */
+export function FileTree() {
   const tree = useAppStore((state) => state.tree);
   const [drag, setDrag] = useState<DragState>({
     dragging: null,
@@ -31,9 +23,6 @@ export function FileTree({ projects, worlds, presets }: FileTreeProps) {
           key={node.path}
           node={node}
           depth={0}
-          projects={projects}
-          worlds={worlds}
-          presets={presets}
           drag={drag}
           setDrag={setDrag}
         />
@@ -50,17 +39,11 @@ export function FileTree({ projects, worlds, presets }: FileTreeProps) {
 function TreeRow({
   node,
   depth,
-  projects,
-  worlds,
-  presets,
   drag,
   setDrag,
 }: {
   node: TreeNode;
   depth: number;
-  projects: ProjectInfo[];
-  worlds: WorldInfo[];
-  presets: PresetDefinition[];
   drag: DragState;
   setDrag: (drag: DragState) => void;
 }) {
@@ -123,22 +106,6 @@ function TreeRow({
   const isOpen = expanded.has(node.path);
   const isActive = openFile?.path === node.path;
 
-  // A project folder gets its preset as a badge; a world gets "World".
-  const project =
-    node.kind === "directory" && node.path.startsWith("Projects/")
-      ? projects.find((item) => `Projects/${item.name}` === node.path)
-      : undefined;
-  const world =
-    node.kind === "directory" && node.path.startsWith("Worlds/")
-      ? worlds.find((item) => `Worlds/${item.name}` === node.path)
-      : undefined;
-  const presetName = project
-    ? (presets.find((preset) => preset.id === project.preset)?.name ??
-      project.preset)
-    : world
-      ? "World"
-      : undefined;
-
   if (node.kind === "directory") {
     return (
       <div role="treeitem" aria-expanded={isOpen}>
@@ -155,9 +122,6 @@ function TreeRow({
         >
           <span className="file-tree__caret">{isOpen ? "▾" : "▸"}</span>
           <span className="file-tree__name">{node.name}</span>
-          {presetName ? (
-            <span className="file-tree__badge">{presetName}</span>
-          ) : null}
         </button>
         {isOpen
           ? node.children?.map((child) => (
@@ -165,9 +129,6 @@ function TreeRow({
                 key={child.path}
                 node={child}
                 depth={depth + 1}
-                projects={projects}
-                worlds={worlds}
-                presets={presets}
                 drag={drag}
                 setDrag={setDrag}
               />

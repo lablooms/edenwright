@@ -1,7 +1,8 @@
 import { app, ipcMain } from "electron";
 
 import type {
-  CreateProjectInput,
+  CreateEdenInput,
+  EdenManifest,
   EdenSettings,
   SearchFilter,
 } from "@edenwright/core";
@@ -34,8 +35,8 @@ export function registerEdenIpc(
 
   ipcMain.handle(
     "eden:create",
-    async (_event, parentDir: string, name: string) => {
-      await service.create(parentDir, name);
+    async (_event, parentDir: string, name: string, input: CreateEdenInput) => {
+      await service.create(parentDir, name, input);
       return { current: service.state(), recents: await recents.list() };
     },
   );
@@ -49,9 +50,25 @@ export function registerEdenIpc(
     await service.close();
   });
 
-  ipcMain.handle("eden:pick-directory", async (_event, title?: string) =>
-    dialogs.pickDirectory({ title }),
+  // Forget a recents entry (never deletes files); resolves the pruned list.
+  ipcMain.handle("eden:remove-recent", async (_event, path: string) => {
+    await recents.remove(path);
+    return recents.list();
+  });
+
+  ipcMain.handle("eden:manifest", () => service.manifest());
+
+  ipcMain.handle("eden:save-manifest", (_event, manifest: EdenManifest) =>
+    service.saveManifest(manifest),
   );
+
+  ipcMain.handle("eden:pick-directory", async (_event, title?: string) => {
+    // e2e can't drive native dialogs; the env var stands in for the choice.
+    if (isTest && process.env.EDENWRIGHT_TEST_PICK_DIR) {
+      return process.env.EDENWRIGHT_TEST_PICK_DIR;
+    }
+    return dialogs.pickDirectory({ title });
+  });
 
   ipcMain.handle("eden:tree", () => service.tree());
 
@@ -160,41 +177,6 @@ export function registerEdenIpc(
   ipcMain.handle("pluginfs:stat", (_event, relPath: string) =>
     service.pluginfsStat(relPath),
   );
-
-  ipcMain.handle("projects:create", (_event, input: CreateProjectInput) =>
-    service.createProject(input),
-  );
-
-  ipcMain.handle("projects:list", () => service.listProjects());
-
-  ipcMain.handle(
-    "projects:update",
-    (
-      _event,
-      name: string,
-      patch: {
-        linkedWorlds?: string[];
-        goals?: { targetWords?: number; dailyWords?: number };
-        order?: string[];
-      },
-    ) => service.updateProject(name, patch),
-  );
-
-  ipcMain.handle("entities:for-project", (_event, projectName: string) =>
-    service.entitiesForProject(projectName),
-  );
-
-  ipcMain.handle(
-    "entities:promote-to-world",
-    (_event, entityRelPath: string, worldName: string) =>
-      service.moveEntityToWorld(entityRelPath, worldName),
-  );
-
-  ipcMain.handle("worlds:create", (_event, name: string) =>
-    service.createWorld(name),
-  );
-
-  ipcMain.handle("worlds:list", () => service.listWorlds());
 
   ipcMain.handle("eden:save-settings", (_event, settings: EdenSettings) =>
     service.saveSettings(settings),

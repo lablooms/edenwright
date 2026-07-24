@@ -92,110 +92,68 @@ export interface IndexedEntitySummary {
   /** Entity type from frontmatter (character, place, …). */
   entityType: string | null;
   aliases: string[];
-  /** World name when the entity comes from a world, else null (§7.5). */
+  /**
+   * Legacy world name when the entity lives in an archived world
+   * (`world/archived-worlds/<name>/`), else null.
+   */
   world: string | null;
 }
 
-/** Codex entities — the `@` completion's universe. */
-export function listIndexedEntities(
-  index: IndexStorageAdapter,
-): IndexedEntitySummary[] {
-  const rows = index.query<{
-    path: string;
-    title: string;
-    stable_id: string | null;
-    frontmatter: string;
-  }>(
-    "SELECT path, title, stable_id, frontmatter FROM files WHERE kind = 'codex' ORDER BY title",
-  );
+interface EntityRow {
+  path: string;
+  title: string;
+  stable_id: string | null;
+  frontmatter: string;
+}
 
-  return rows.map((row) => {
-    let entityType: string | null = null;
-    let aliases: string[] = [];
-    try {
-      const frontmatter = JSON.parse(row.frontmatter) as Record<
-        string,
-        unknown
-      >;
-      entityType =
-        typeof frontmatter.type === "string" ? frontmatter.type : null;
-      if (Array.isArray(frontmatter.aliases)) {
-        aliases = frontmatter.aliases.filter(
-          (alias): alias is string => typeof alias === "string",
-        );
-      }
-    } catch {
-      // Corrupt cached frontmatter degrades to a bare entity — the file
-      // itself is the truth and will re-derive on next change.
+const ARCHIVED_WORLDS_PREFIX = "world/archived-worlds/";
+
+function toEntitySummary(row: EntityRow): IndexedEntitySummary {
+  let entityType: string | null = null;
+  let aliases: string[] = [];
+  try {
+    const frontmatter = JSON.parse(row.frontmatter) as Record<string, unknown>;
+    entityType = typeof frontmatter.type === "string" ? frontmatter.type : null;
+    if (Array.isArray(frontmatter.aliases)) {
+      aliases = frontmatter.aliases.filter(
+        (alias): alias is string => typeof alias === "string",
+      );
     }
-    return {
-      path: row.path,
-      name: row.title,
-      stableId: row.stable_id,
-      entityType,
-      aliases,
-      world: row.path.startsWith("Worlds/")
-        ? (row.path.split("/")[1] ?? null)
-        : null,
-    };
-  });
+  } catch {
+    // Corrupt cached frontmatter degrades to a bare entity — the file
+    // itself is the truth and will re-derive on next change.
+  }
+  return {
+    path: row.path,
+    name: row.title,
+    stableId: row.stable_id,
+    entityType,
+    aliases,
+    world: row.path.startsWith(ARCHIVED_WORLDS_PREFIX)
+      ? (row.path.split("/")[2] ?? null)
+      : null,
+  };
 }
 
 /**
- * Entities visible from one project (§7.5): its own codex plus the codices
- * of its linked worlds. World entities carry their world name as a badge.
+ * Every codex entity in the eden — one eden, one world, one codex.
+ * This is the `@` completion's universe.
  */
-export function listEntitiesForProject(
+export function listEntities(
   index: IndexStorageAdapter,
-  projectName: string,
-  linkedWorlds: readonly string[],
 ): IndexedEntitySummary[] {
-  const containers = [
-    `Projects/${projectName}`,
-    ...linkedWorlds.map((world) => `Worlds/${world}`),
-  ];
-  const placeholders = containers.map(() => "?").join(", ");
-  const rows = index.query<{
-    path: string;
-    title: string;
-    stable_id: string | null;
-    frontmatter: string;
-  }>(
-    `SELECT path, title, stable_id, frontmatter FROM files
-     WHERE kind = 'codex' AND container IN (${placeholders})
-     ORDER BY title`,
-    containers,
-  );
+  return index
+    .query<EntityRow>(
+      "SELECT path, title, stable_id, frontmatter FROM files WHERE kind = 'codex' ORDER BY title",
+    )
+    .map(toEntitySummary);
+}
 
-  return rows.map((row) => {
-    let entityType: string | null = null;
-    let aliases: string[] = [];
-    try {
-      const frontmatter = JSON.parse(row.frontmatter) as Record<
-        string,
-        unknown
-      >;
-      entityType =
-        typeof frontmatter.type === "string" ? frontmatter.type : null;
-      if (Array.isArray(frontmatter.aliases)) {
-        aliases = frontmatter.aliases.filter(
-          (alias): alias is string => typeof alias === "string",
-        );
-      }
-    } catch {
-      // Degrade to a bare entity.
-    }
-    return {
-      path: row.path,
-      name: row.title,
-      stableId: row.stable_id,
-      entityType,
-      aliases,
-      world: row.path.startsWith("Worlds/")
-        ? (row.path.split("/")[1] ?? null)
-        : null,
-    };
-  });
+/** @deprecated Alias of {@link listEntities}, kept for existing call sites. */
+export function listIndexedEntities(
+  index: IndexStorageAdapter,
+): IndexedEntitySummary[] {
+  return listEntities(index);
 }
 
 /** Backlinks to a target: files whose links mention `targetRaw`. */

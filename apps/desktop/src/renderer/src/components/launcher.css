@@ -1,0 +1,299 @@
+.launcher {
+  display: flex;
+  height: 100%;
+}
+
+/* Brand pane: the one raised surface on the screen — quiet, not a card. */
+.launcher__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ew-space-3);
+  width: 320px;
+  flex-shrink: 0;
+  padding: var(--ew-space-8);
+  text-align: center;
+  background: var(--ew-surface-raised);
+  border-right: 1px solid var(--ew-border);
+}
+
+.launcher__wordmark {
+  margin: var(--ew-space-2) 0 0;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.launcher__tagline {
+  margin: 0;
+  color: var(--ew-ink-dim);
+}
+
+.launcher__main {
+  flex: 1;
+  overflow: auto;
+  padding: var(--ew-space-12) var(--ew-space-8);
+}
+
+.launcher__sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ew-space-8);
+  width: min(560px, 100%);
+  margin: 0 auto;
+}
+
+.launcher__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ew-space-3);
+}
+
+.launcher__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ew-space-3);
+}
+
+.launcher__heading {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ew-ink-dim);
+}
+
+.launcher__open-error {
+  margin: 0;
+  padding: var(--ew-space-2) var(--ew-space-3);
+  font-size: 13px;
+  color: var(--ew-ink);
+  background: var(--ew-accent-tint);
+  border: 1px solid var(--ew-border-strong);
+  border-radius: var(--ew-radius-sm);
+}
+
+.launcher__recents {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ew-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.launcher__recent-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ew-space-1);
+}
+
+.launcher__recent {
+  display: flex;
+  align-items: center;
+  gap: var(--ew-space-3);
+  flex: 1;
+  min-width: 0;
+  padding: var(--ew-space-2) var(--ew-space-3);
+  border-radius: var(--ew-radius-sm);
+  text-align: left;
+  transition: background-color var(--ew-motion-fast) var(--ew-ease-out);
+}
+
+.launcher__recent:hover {
+  background: var(--ew-surface-hover);
+}
+
+.launcher__recent-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--ew-leaf);
+}
+
+.launcher__recent-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.launcher__recent-name {
+  font-weight: 500;
+}
+
+.launcher__recent-path {
+  font-size: 12px;
+  color: var(--ew-ink-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.launcher__recent-date {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--ew-ink-dim);
+}
+
+/* Forget-button: quiet until its row is hovered, never destructive. */
+.launcher__recent-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: var(--ew-radius-sm);
+  color: var(--ew-ink-dim);
+  opacity: 0;
+  transition:
+    opacity var(--ew-motion-fast) var(--ew-ease-out),
+    background-color var(--ew-motion-fast) var(--ew-ease-out),
+    color var(--ew-motion-fast) var(--ew-ease-out);
+}
+
+.launcher__recent-row:hover .launcher__recent-remove,
+.launcher__recent-remove:focus-visible {
+  opacity: 1;
+}
+
+.launcher__recent-remove:hover {
+  background: var(--ew-surface-hover);
+  color: var(--ew-ink);
+}
+
+.launcher__empty-recents {
+  display: flex;
+  align-items: center;
+  gap: var(--ew-space-3);
+  padding: var(--ew-space-4);
+  color: var(--ew-ink-dim);
+  font-size: 13px;
+  border: 1px dashed var(--ew-border-strong);
+  border-radius: var(--ew-radius-md);
+}
+
+.launcher__empty-recents p {
+  margin: 0;
+}
+
+.launcher__create {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ew-space-3);
+  padding: var(--ew-space-4);
+  background: var(--ew-surface-raised);
+  border: 1px solid var(--ew-border);
+  border-radius: var(--ew-radius-lg);
+}
+
+.launcher__input {
+  padding: var(--ew-space-2) var(--ew-space-3);
+  font: inherit;
+  color: var(--ew-ink);
+  background: var(--ew-void);
+  border: 1px solid var(--ew-border);
+  border-radius: var(--ew-radius-sm);
+}
+
+.launcher__input::placeholder {
+  color: var(--ew-ink-dim);
+}
+
+.launcher__input:focus {
+  outline: 2px solid var(--ew-focus-ring);
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+/* Preset picker: a scrollable list of cards — 20+ presets must not push
+   the folder picker and Create button off screen. */
+.launcher__presets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ew-space-1);
+  max-height: 260px;
+  overflow: auto;
+}
+
+.launcher__preset {
+  display: flex;
+  align-items: center;
+  gap: var(--ew-space-3);
+  padding: var(--ew-space-2) var(--ew-space-3);
+  border: 1px solid transparent;
+  border-radius: var(--ew-radius-sm);
+  text-align: left;
+  transition:
+    background-color var(--ew-motion-fast) var(--ew-ease-out),
+    border-color var(--ew-motion-fast) var(--ew-ease-out);
+}
+
+.launcher__preset:hover {
+  background: var(--ew-surface-hover);
+}
+
+.launcher__preset--selected {
+  background: var(--ew-accent-tint);
+  border-color: var(--ew-border-strong);
+}
+
+.launcher__preset-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--ew-leaf);
+}
+
+.launcher__preset-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.launcher__preset-name {
+  font-weight: 500;
+}
+
+.launcher__preset-desc {
+  font-size: 12px;
+  color: var(--ew-ink-dim);
+}
+
+.launcher__location {
+  display: flex;
+  align-items: center;
+  gap: var(--ew-space-3);
+  min-width: 0;
+}
+
+.launcher__location-path {
+  font-size: 12px;
+  color: var(--ew-ink-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.launcher__create-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ew-space-2);
+}
+
+.launcher__hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ew-ink-dim);
+}
+
+@media (max-width: 860px) {
+  /* Narrow windows: the brand steps aside, the actions keep the stage. */
+  .launcher__brand {
+    display: none;
+  }
+}

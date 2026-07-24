@@ -11,6 +11,8 @@ import {
   type Page,
 } from "@playwright/test";
 
+import { createTestEden } from "./helpers";
+
 const appRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 // Seed themes install from the app bundle — no network, no stubs (W2).
@@ -28,11 +30,7 @@ test.describe("P4 — Themes (v2)", () => {
     });
     page = await app.firstWindow();
 
-    await page.evaluate(
-      (parent) => window.edenwright.eden.create(parent, "P4T Eden"),
-      sandbox.replace(/\\/g, "/"),
-    );
-    await page.evaluate(() => window.edenwright.test!.whenRebuilt());
+    await createTestEden(page, sandbox, "P4T Eden");
     await page.locator(".ew-sidebar").waitFor({ timeout: 30000 });
     await page.evaluate(() =>
       window.__ewStores.app.getState().setSideView("themes"),

@@ -11,6 +11,8 @@ import {
   type Page,
 } from "@playwright/test";
 
+import { createTestEden } from "./helpers";
+
 const appRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 // M6 (SPEC §10/§12): the export pipeline — registry, dialog, exports/ on disk.
@@ -28,29 +30,17 @@ test.describe("M6 — Exports (prose pipeline)", () => {
     });
     page = await app.firstWindow();
 
-    await page.evaluate(
-      (parent) => window.edenwright.eden.create(parent, "M6 Eden"),
-      sandbox.replace(/\\/g, "/"),
-    );
-    await page.evaluate(() => window.edenwright.test!.whenRebuilt());
+    // One eden = one story: the eden IS "Hollow Crown" — its name drives
+    // the dialog title and the exported filenames.
+    await createTestEden(page, sandbox, "Hollow Crown");
     await page.evaluate(async () => {
-      await window.edenwright.projects.create({
-        name: "Hollow Crown",
-        preset: "novel",
-        medium: "prose",
-        scaffold: [
-          { path: "manuscript" },
-          { path: "codex" },
-          { path: "notes" },
-        ],
-      });
       await window.edenwright.files.write(
-        "Projects/Hollow Crown/manuscript/fall.md",
+        "manuscript/fall.md",
         '---\ntitle: "The Long Way Down"\n---\nYuki counted **ninety-nine** steps as she fell.\n',
         null,
       );
       await window.edenwright.files.write(
-        "Projects/Hollow Crown/manuscript/door.md",
+        "manuscript/door.md",
         '---\ntitle: "The Door"\n---\nThe door was not there yesterday.\n',
         null,
       );
@@ -58,9 +48,7 @@ test.describe("M6 — Exports (prose pipeline)", () => {
     });
     await page.locator(".ew-sidebar").waitFor({ timeout: 30000 });
     await page.evaluate(() =>
-      window.__ewStores.app
-        .getState()
-        .openFileAt("Projects/Hollow Crown/manuscript/fall.md"),
+      window.__ewStores.app.getState().openFileAt("manuscript/fall.md"),
     );
   });
 
@@ -73,6 +61,8 @@ test.describe("M6 — Exports (prose pipeline)", () => {
     await page.evaluate(() =>
       window.__ewStores.app.getState().setExportOpen(true),
     );
+    const dialog = page.locator('[role="dialog"][aria-label="Export eden"]');
+    await expect(dialog).toBeVisible();
     await expect(page.locator(".export-modal")).toContainText(
       "Export Hollow Crown",
     );
@@ -90,14 +80,7 @@ test.describe("M6 — Exports (prose pipeline)", () => {
     );
 
     const markdown = await readFile(
-      join(
-        sandbox,
-        "M6 Eden",
-        "Projects",
-        "Hollow Crown",
-        "exports",
-        "Hollow-Crown.md",
-      ),
+      join(sandbox, "Hollow Crown", "exports", "Hollow-Crown.md"),
       "utf8",
     );
     expect(markdown).toContain("# Hollow Crown");
@@ -139,13 +122,7 @@ test.describe("M6 — Exports (prose pipeline)", () => {
       { timeout: 20000 },
     );
 
-    const exportsDir = join(
-      sandbox,
-      "M6 Eden",
-      "Projects",
-      "Hollow Crown",
-      "exports",
-    );
+    const exportsDir = join(sandbox, "Hollow Crown", "exports");
     for (const file of [
       "Hollow-Crown.md",
       "Hollow-Crown.docx",

@@ -17,7 +17,13 @@ export interface EditorSettings {
   /** Bundled font id, or any installed system font family name. */
   fontFamily: BundledEditorFont | (string & {});
   fontSize: number;
+  /** Editor line length in ch units — the "line width" comfort slider. */
+  lineWidth: number;
   smartTypography: boolean;
+  /** Underline misspellings while writing (Electron's built-in checker). */
+  spellcheck: boolean;
+  /** Keep the line being written vertically centered. */
+  typewriterMode: boolean;
 }
 
 export interface SnapshotSettings {
@@ -27,12 +33,20 @@ export interface SnapshotSettings {
 
 /** Plugin enablement and trust (SPEC §9.3). */
 export interface PluginSettings {
-  /** Master switch: disables every community plugin when true. */
+  /**
+   * Master switch for third-party code: silences every folder-installed
+   * plugin when true. Core plugins are first-party and stay on (R5).
+   */
   restrictedMode: boolean;
-  /** Enabled plugin ids. */
+  /** Enabled folder-installed plugin ids (.eden/plugins/). */
   enabled: string[];
   /** Plugin ids whose trust dialog was accepted on this eden. */
   trustAcknowledged: string[];
+  /**
+   * Core (first-party, bundled) plugin ids the user turned off. Core
+   * plugins default ON — absence from this list means enabled (R5).
+   */
+  coreDisabled: string[];
 }
 
 /** Theme selection (SPEC §9.5). */
@@ -52,7 +66,10 @@ export const DEFAULT_EDEN_SETTINGS: EdenSettings = {
   editor: {
     fontFamily: "literata",
     fontSize: 17,
+    lineWidth: 72,
     smartTypography: true,
+    spellcheck: true,
+    typewriterMode: false,
   },
   snapshots: {
     intervalMinutes: SNAPSHOT_DEFAULT_INTERVAL_MINUTES,
@@ -62,6 +79,7 @@ export const DEFAULT_EDEN_SETTINGS: EdenSettings = {
     restrictedMode: false,
     enabled: [],
     trustAcknowledged: [],
+    coreDisabled: [],
   },
   theme: {
     active: DEFAULT_THEME_ID,
@@ -114,9 +132,21 @@ export function parseEdenSettings(raw: unknown): EdenSettings {
         editor.fontSize,
         DEFAULT_EDEN_SETTINGS.editor.fontSize,
       ),
+      lineWidth: pickNumber(
+        editor.lineWidth,
+        DEFAULT_EDEN_SETTINGS.editor.lineWidth,
+      ),
       smartTypography: pickBoolean(
         editor.smartTypography,
         DEFAULT_EDEN_SETTINGS.editor.smartTypography,
+      ),
+      spellcheck: pickBoolean(
+        editor.spellcheck,
+        DEFAULT_EDEN_SETTINGS.editor.spellcheck,
+      ),
+      typewriterMode: pickBoolean(
+        editor.typewriterMode,
+        DEFAULT_EDEN_SETTINGS.editor.typewriterMode,
       ),
     },
     snapshots: {
@@ -136,6 +166,7 @@ export function parseEdenSettings(raw: unknown): EdenSettings {
       ),
       enabled: stringArray(plugins.enabled),
       trustAcknowledged: stringArray(plugins.trustAcknowledged),
+      coreDisabled: stringArray(plugins.coreDisabled),
     },
     theme: {
       active: pickString(theme.active, DEFAULT_EDEN_SETTINGS.theme.active),

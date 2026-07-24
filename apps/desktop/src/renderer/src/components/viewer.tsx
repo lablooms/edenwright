@@ -1,10 +1,6 @@
 import { useDeferredValue, useMemo } from "react";
 
-import {
-  countWords,
-  kindFromPath,
-  projectNameFromPath,
-} from "@edenwright/core";
+import { countWords, kindFromPath } from "@edenwright/core";
 import { CalendarClock, Download, FileText, LayoutGrid } from "lucide-react";
 
 import { Button, EmptyState, Icon } from "@edenwright/ui";
@@ -12,6 +8,7 @@ import { Button, EmptyState, Icon } from "@edenwright/ui";
 import { useAppStore } from "../store";
 import { usePluginStore } from "../plugins/plugin-store";
 import { CodexSheet } from "./codex-sheet";
+import { EditorToolbar } from "./editor-toolbar";
 import { MarkdownEditor } from "./markdown-editor";
 import "./viewer.css";
 
@@ -34,31 +31,36 @@ export function Viewer() {
   const fontSize = useAppStore(
     (state) => state.edenState?.current?.settings.editor.fontSize ?? 17,
   );
+  const lineWidth = useAppStore(
+    (state) => state.edenState?.current?.settings.editor.lineWidth ?? 72,
+  );
+  const typewriterMode = useAppStore(
+    (state) =>
+      state.edenState?.current?.settings.editor.typewriterMode ?? false,
+  );
   const registeredExtensions = usePluginStore(
     (state) => state.editorExtensions,
   );
-  const projects = useAppStore((state) => state.projects);
+  const edenManifest = useAppStore((state) => state.edenManifest);
   const editSource = useAppStore((state) => state.editSource);
   const setMainView = useAppStore((state) => state.setMainView);
   const setExportOpen = useAppStore((state) => state.setExportOpen);
 
-  // Factories are computed per editor with the file's preset/medium —
+  // Factories are computed per editor with the eden's preset/medium —
   // that's how medium plugins gate themselves (SPEC v2 §7.2).
   const pluginExtensions = useMemo(() => {
     if (!openFile) return [];
-    const projectName = projectNameFromPath(openFile.path);
-    const project = projects.find((item) => item.name === projectName);
     const context = {
       filePath: openFile.path,
-      medium: project?.medium ?? null,
-      preset: project?.preset ?? null,
+      medium: edenManifest?.medium ?? null,
+      preset: edenManifest?.preset ?? null,
     };
     return registeredExtensions
       .map((extension) =>
         typeof extension === "function" ? extension(context) : extension,
       )
       .filter((extension) => extension !== null);
-  }, [openFile, projects, registeredExtensions]);
+  }, [openFile, edenManifest, registeredExtensions]);
 
   const reveal = useAppStore((state) => state.reveal);
   const setDraft = useAppStore((state) => state.setDraft);
@@ -86,6 +88,8 @@ export function Viewer() {
   const sessionDelta =
     focusStartWords !== null ? words - focusStartWords : null;
   const isCodexFile = kindFromPath(openFile.path) === "codex" && !editSource;
+  // The toolbar formats prose files; anything else gets it greyed out.
+  const isMarkdown = openFile.path.toLowerCase().endsWith(".md");
 
   return (
     <div className="viewer">
@@ -129,7 +133,7 @@ export function Viewer() {
             </Button>
             <Button
               variant="ghost"
-              title="Export project…"
+              title="Export…"
               onClick={() => setExportOpen(true)}
             >
               <Icon icon={Download} size={15} />
@@ -147,26 +151,30 @@ export function Viewer() {
       {isCodexFile ? (
         <CodexSheet key={openFile.path} />
       ) : (
-        <MarkdownEditor
-          key={openFile.path}
-          filePath={openFile.path}
-          initialContent={openFile.content}
-          content={openFile.content}
-          savedContent={openFile.savedContent}
-          focusMode={focusMode}
-          smartQuotes={smartQuotes}
-          fontFamily={fontFamily}
-          fontSize={fontSize}
-          pluginExtensions={pluginExtensions}
-          revealTerm={
-            reveal && reveal.path === openFile.path ? reveal.term : null
-          }
-          onChange={setDraft}
-          onSave={() => void saveFile()}
-          onOpenWikiLink={(raw) => void openWikiLink(raw)}
-          onOpenMention={(key) => void openMention(key)}
-          onRevealDone={() => setReveal(null)}
-        />
+        <>
+          {focusMode ? null : <EditorToolbar disabled={!isMarkdown} />}
+          <MarkdownEditor
+            key={openFile.path}
+            initialContent={openFile.content}
+            content={openFile.content}
+            savedContent={openFile.savedContent}
+            focusMode={focusMode}
+            smartQuotes={smartQuotes}
+            fontFamily={fontFamily}
+            fontSize={fontSize}
+            lineWidth={lineWidth}
+            typewriterMode={typewriterMode}
+            pluginExtensions={pluginExtensions}
+            revealTerm={
+              reveal && reveal.path === openFile.path ? reveal.term : null
+            }
+            onChange={setDraft}
+            onSave={() => void saveFile()}
+            onOpenWikiLink={(raw) => void openWikiLink(raw)}
+            onOpenMention={(key) => void openMention(key)}
+            onRevealDone={() => setReveal(null)}
+          />
+        </>
       )}
     </div>
   );

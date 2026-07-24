@@ -27,12 +27,16 @@ const api: EdenwrightApi = {
   },
   eden: {
     state: () => ipcRenderer.invoke("eden:state"),
-    create: (parentDir, name) =>
-      ipcRenderer.invoke("eden:create", parentDir, name),
+    create: (parentDir, name, input) =>
+      ipcRenderer.invoke("eden:create", parentDir, name, input),
     open: (path) => ipcRenderer.invoke("eden:open", path),
     close: () => ipcRenderer.invoke("eden:close"),
+    removeRecent: (path) => ipcRenderer.invoke("eden:remove-recent", path),
     pickDirectory: (title) => ipcRenderer.invoke("eden:pick-directory", title),
     tree: () => ipcRenderer.invoke("eden:tree"),
+    manifest: () => ipcRenderer.invoke("eden:manifest"),
+    saveManifest: (manifest) =>
+      ipcRenderer.invoke("eden:save-manifest", manifest),
     saveSettings: (settings) =>
       ipcRenderer.invoke("eden:save-settings", settings),
     onEvent: (callback) => {
@@ -93,21 +97,6 @@ const api: EdenwrightApi = {
     exists: (relPath) => ipcRenderer.invoke("pluginfs:exists", relPath),
     stat: (relPath) => ipcRenderer.invoke("pluginfs:stat", relPath),
   },
-  projects: {
-    create: (input) => ipcRenderer.invoke("projects:create", input),
-    list: () => ipcRenderer.invoke("projects:list"),
-    update: (name, patch) => ipcRenderer.invoke("projects:update", name, patch),
-  },
-  worlds: {
-    create: (name) => ipcRenderer.invoke("worlds:create", name),
-    list: () => ipcRenderer.invoke("worlds:list"),
-  },
-  entities: {
-    forProject: (projectName) =>
-      ipcRenderer.invoke("entities:for-project", projectName),
-    promoteToWorld: (entityRelPath, worldName) =>
-      ipcRenderer.invoke("entities:promote-to-world", entityRelPath, worldName),
-  },
   history: {
     versions: (relPath) => ipcRenderer.invoke("history:versions", relPath),
     readVersion: (snapshotName, relPath) =>
@@ -124,6 +113,8 @@ const api: EdenwrightApi = {
     version: () => ipcRenderer.invoke("app:version"),
     openExternal: (url) => ipcRenderer.invoke("app:open-external", url),
     readBundled: (relPath) => ipcRenderer.invoke("app:read-bundled", relPath),
+    setSpellcheck: (enabled) =>
+      ipcRenderer.invoke("app:set-spellcheck", enabled),
   },
 };
 

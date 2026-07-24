@@ -13,18 +13,6 @@ module.exports = definePlugin({
   manifest: require("./manifest.json"),
 
   onload(ctx) {
-    const listProjects = async () => {
-      const entries = await ctx.eden.fs.list("Projects").catch(() => []);
-      const projects = [];
-      for (const entry of entries) {
-        if (entry.kind !== "directory") continue;
-        if (await ctx.eden.fs.exists(`Projects/${entry.name}/project.json`)) {
-          projects.push(entry.name);
-        }
-      }
-      return projects;
-    };
-
     const bar = (label, value, max) => {
       const width = max > 0 ? Math.max(2, Math.round((value / max) * 100)) : 2;
       return `
@@ -40,15 +28,15 @@ module.exports = definePlugin({
       return `<span class="stats-heat stats-heat--${level}" title="${day}: ${words} words"></span>`;
     };
 
-    const renderDashboard = async (element, project) => {
-      const container = `Projects/${project}`;
-      const series = await ctx.index.getDailyWords(container, HEATMAP_DAYS);
+    // One eden = one story: the dashboard reads the whole eden (".").
+    const renderDashboard = async (element) => {
+      const series = await ctx.index.getDailyWords(".", HEATMAP_DAYS);
       const pace = series.slice(-PACE_DAYS);
       const paceMax = Math.max(...pace.map((d) => d.words), 0);
       const heatMax = Math.max(...series.map((d) => d.words), 0);
       const total = series.reduce((sum, d) => sum + d.words, 0);
 
-      const entities = await ctx.index.listEntities(container);
+      const entities = await ctx.index.listEntities();
       const screenTime = [];
       for (const entity of entities.slice(0, 40)) {
         const appearances = await ctx.index.getEntityAppearances(
@@ -62,7 +50,7 @@ module.exports = definePlugin({
       const topMax = top.length > 0 ? top[0].count : 0;
 
       element.innerHTML = `
-        <h3>Stats — ${project}</h3>
+        <h3>Stats</h3>
         <p class="stats-blurb">${total.toLocaleString("en-US")} words across ${HEATMAP_DAYS / 7} weeks.</p>
         <h4>Pace — last ${PACE_DAYS} days</h4>
         <div class="stats-pace">
@@ -78,7 +66,7 @@ module.exports = definePlugin({
             ? `<div class="stats-pace">${top
                 .map((e) => bar(e.name, e.count, topMax))
                 .join("")}</div>`
-            : '<p class="stats-blurb">No @mentions in this project yet — tag an entity to light this up.</p>'
+            : '<p class="stats-blurb">No @mentions yet — tag an entity to light this up.</p>'
         }
       `;
     };
@@ -89,32 +77,10 @@ module.exports = definePlugin({
       icon: "BarChart3",
       async render(element) {
         element.classList.add("stats-panel");
-        const projects = await listProjects();
-        if (projects.length === 0) {
-          element.innerHTML =
-            '<p class="stats-blurb">Create a project first — stats count its words.</p>';
-          return () => element.replaceChildren();
-        }
-        let current = projects[0];
         const shell = document.createElement("div");
         shell.className = "stats-shell";
-        if (projects.length > 1) {
-          const picker = document.createElement("select");
-          picker.className = "stats-picker";
-          for (const name of projects) {
-            const option = document.createElement("option");
-            option.value = name;
-            option.textContent = name;
-            picker.appendChild(option);
-          }
-          picker.addEventListener("change", () => {
-            current = picker.value;
-            void renderDashboard(shell, current);
-          });
-          element.appendChild(picker);
-        }
         element.appendChild(shell);
-        await renderDashboard(shell, current);
+        await renderDashboard(shell);
         return () => element.replaceChildren();
       },
     });

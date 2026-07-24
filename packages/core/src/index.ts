@@ -28,24 +28,30 @@ export {
 } from "./settings.js";
 
 export {
+  EDEN_EXPORTS_DIR,
   EDEN_INDEX_FILE,
+  EDEN_MANIFEST_FILE,
   EDEN_META_DIR,
   EDEN_PLUGINS_DIR,
-  EDEN_PROJECTS_DIR,
   EDEN_SETTINGS_FILE,
   EDEN_SNAPSHOTS_DIR,
   EDEN_THEMES_DIR,
-  EDEN_WORLDS_DIR,
+  EDEN_WELCOME_FILE,
+  EDEN_WORLD_DIR,
+  LEGACY_PROJECTS_DIR,
+  LEGACY_WORLDS_DIR,
   type EdenInfo,
 } from "./model/eden.js";
 
 export {
-  parseProjectManifest,
-  parseWorldManifest,
+  parseEdenManifest,
+  parseLegacyProjectManifest,
+  parseLegacyWorldManifest,
   serializeManifest,
-  type ProjectGoals,
-  type ProjectManifest,
-  type WorldManifest,
+  type EdenGoals,
+  type EdenManifest,
+  type LegacyProjectManifest,
+  type LegacyWorldManifest,
 } from "./model/manifests.js";
 
 export {
@@ -95,20 +101,20 @@ export {
 export {
   createEden,
   isEden,
+  loadEdenManifest,
   loadEdenSettings,
+  needsMigration,
+  saveEdenManifest,
   saveEdenSettings,
   validateEdenName,
+  welcomeNoteContents,
+  type CreateEdenInput,
+  type ScaffoldInput,
 } from "./eden-structure.js";
 
-export {
-  createProject,
-  listProjects,
-  projectNameFromPath,
-  type CreateProjectInput,
-  type ScaffoldInput,
-} from "./project.js";
+export { ensureWorldDirs, WORLD_SUBDIRS } from "./world-structure.js";
 
-export { createWorld, listWorlds, WORLD_SUBDIRS } from "./world-structure.js";
+export { migrateLegacyEden, type LegacyMigrationReport } from "./migration.js";
 
 export {
   BUILTIN_PRESETS,
@@ -151,7 +157,7 @@ export {
   getEntityAppearances,
   getIndexedFileInfo,
   getOutgoingLinks,
-  listEntitiesForProject,
+  listEntities,
   listIndexedEntities,
   listIndexedFiles,
   searchIndex,

@@ -2,16 +2,17 @@ import type { FileSystemAdapter } from "@edenwright/core";
 import type { ExporterDefinition } from "@edenwright/plugin-api";
 import JSZip from "jszip";
 
-import type { ProjectInfo } from "../../../preload/api";
+import type { EdenManifestInfo } from "../../../preload/api";
 
 /**
  * Runs an exporter through the ExporterRegistry (SPEC v2 §7.2), with the
- * shell's real capabilities behind the context (§8).
+ * shell's real capabilities behind the context (§8). One eden = one story:
+ * the "project" an exporter sees is the eden root, output lands in exports/.
  */
 export async function runExport(
   exporter: ExporterDefinition,
   format: string,
-  project: ProjectInfo,
+  manifest: EdenManifestInfo,
 ): Promise<void> {
   const bridge = window.edenwright;
   const fs: FileSystemAdapter = {
@@ -28,8 +29,9 @@ export async function runExport(
   };
 
   await exporter.run(format, {
-    projectPath: `Projects/${project.name}`,
-    outputDir: `Projects/${project.name}/exports`,
+    projectPath: ".",
+    projectName: manifest.name,
+    outputDir: "exports",
     scope: [],
     fs,
     renderPdf: (html, outRelPath) =>

@@ -11,6 +11,8 @@ import {
   type Page,
 } from "@playwright/test";
 
+import { createTestEden } from "./helpers";
+
 const appRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 // M5 slice 5 (§7.8): goals, progress, streak, per-day chart.
@@ -28,28 +30,19 @@ test.describe("M5 — Goals & streaks", () => {
     });
     page = await app.firstWindow();
 
-    await page.evaluate(
-      (parent) => window.edenwright.eden.create(parent, "M5G Eden"),
-      sandbox.replace(/\\/g, "/"),
-    );
-    await page.evaluate(() => window.edenwright.test!.whenRebuilt());
+    await createTestEden(page, sandbox, "M5G Eden");
     await page.evaluate(async () => {
-      await window.edenwright.projects.create({
-        name: "Hollow Crown",
-        preset: "novel",
-        medium: "prose",
-        scaffold: [
-          { path: "manuscript" },
-          { path: "codex" },
-          { path: "notes" },
-        ],
-      });
-      await window.edenwright.projects.update("Hollow Crown", {
+      // Goals live on the eden manifest now (one eden = one story).
+      const manifest = await window.edenwright.eden.manifest();
+      await window.edenwright.eden.saveManifest({
+        ...manifest,
         goals: { targetWords: 90000, dailyWords: 500 },
       });
+      // The bridge write doesn't echo back into the store — pull it in.
+      await window.__ewStores.app.getState().refreshManifest();
       const words = Array.from({ length: 200 }, (_, i) => `word${i}`).join(" ");
       await window.edenwright.files.write(
-        "Projects/Hollow Crown/manuscript/scene one.md",
+        "manuscript/scene one.md",
         `# Scene one\n\n${words}\n`,
         null,
       );
@@ -64,9 +57,7 @@ test.describe("M5 — Goals & streaks", () => {
 
   test("goals editors, progress bars, streak calendar, history chart", async () => {
     await page.evaluate(() =>
-      window.__ewStores.app
-        .getState()
-        .openFileAt("Projects/Hollow Crown/manuscript/scene one.md"),
+      window.__ewStores.app.getState().openFileAt("manuscript/scene one.md"),
     );
 
     // Editors carry the manifest goals.
@@ -94,20 +85,18 @@ test.describe("M5 — Goals & streaks", () => {
     // Write more words; today's count follows the index.
     await page.evaluate(async () => {
       const file = await window.edenwright.files.read(
-        "Projects/Hollow Crown/manuscript/scene one.md",
+        "manuscript/scene one.md",
       );
       const more = Array.from({ length: 100 }, (_, i) => `extra${i}`).join(" ");
       await window.edenwright.files.write(
-        "Projects/Hollow Crown/manuscript/scene one.md",
+        "manuscript/scene one.md",
         `${file.content}\n${more}\n`,
         file.mtimeMs,
       );
     });
     // Re-open so the store picks up the new mtime and the panel reloads.
     await page.evaluate(() =>
-      window.__ewStores.app
-        .getState()
-        .openFileAt("Projects/Hollow Crown/manuscript/scene one.md"),
+      window.__ewStores.app.getState().openFileAt("manuscript/scene one.md"),
     );
     await expect(page.locator(".ew-progress__label").nth(1)).toContainText(
       "today 302 / 500",

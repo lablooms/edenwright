@@ -28,8 +28,12 @@ export const universalExporter: ExporterDefinition = {
   ],
   async run(format, context) {
     const sections = await collectSections(context.fs, context.projectPath);
+    // The shell passes the eden's name; a bare projectPath ("." at the eden
+    // root) has no name of its own to fall back on.
     const projectName =
-      context.projectPath.split("/").filter(Boolean).pop() ?? "project";
+      context.projectName ??
+      context.projectPath.split("/").filter(Boolean).pop() ??
+      "eden";
     const input = { projectName, sections };
     const base = `${context.outputDir}/${sanitizeFileName(projectName)}`;
 

@@ -5,6 +5,13 @@
   min-height: 0;
 }
 
+/* A plugin editor mode owns its formatting surface (screenplay element
+ * cycling, comic panels): medium plugins tag their editor with the
+ * `cm-ew-plugin-mode` class, and the writer toolbar steps aside. */
+.viewer:has(.cm-editor.cm-ew-plugin-mode) .editor-toolbar {
+  display: none;
+}
+
 .viewer__header {
   display: flex;
   align-items: center;

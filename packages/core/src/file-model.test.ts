@@ -74,11 +74,12 @@ describe("deriveFile", () => {
 
 describe("kindFromPath", () => {
   it("classifies by folder", () => {
-    expect(kindFromPath("Projects/Hollow/manuscript/scene.md")).toBe(
-      "manuscript",
+    expect(kindFromPath("manuscript/scene.md")).toBe("manuscript");
+    expect(kindFromPath("world/codex/yuki.md")).toBe("codex");
+    expect(kindFromPath("world/notes/history.md")).toBe("note");
+    expect(kindFromPath("world/archived-worlds/Aster/codex/old.md")).toBe(
+      "codex",
     );
-    expect(kindFromPath("Projects/Hollow/codex/yuki.md")).toBe("codex");
-    expect(kindFromPath("Worlds/Aster/notes/history.md")).toBe("note");
   });
 });
 

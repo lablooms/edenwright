@@ -15,6 +15,8 @@ interface MemoryNode {
 
 /** Minimal encoder capability — every supported runtime has TextEncoder. */
 declare const TextEncoder: new () => { encode(text: string): Uint8Array };
+/** Minimal decoder capability — every supported runtime has TextDecoder. */
+declare const TextDecoder: new () => { decode(data: Uint8Array): string };
 
 /**
  * In-memory FileSystemAdapter for core unit tests — same contract, no disk.
@@ -38,7 +40,10 @@ export class InMemoryFileSystemAdapter implements FileSystemAdapter {
     if (!node || node.kind !== "file") {
       throw new EdenwrightError("NOT_FOUND", `No such file: ${path}`);
     }
-    return node.contents ?? "";
+    // Binary-written files (e.g. migration copies) decode back to text.
+    return (
+      node.contents ?? new TextDecoder().decode(node.binary ?? new Uint8Array())
+    );
   }
 
   async writeFile(path: string, contents: string): Promise<void> {

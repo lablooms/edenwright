@@ -1,8 +1,8 @@
 import type { Disposable } from "./disposable.js";
 
 /**
- * Exporters (SPEC v2 §7.2, §8). An exporter turns a project into files in the
- * project's `exports/` folder. Universal formats ship with the app; medium
+ * Exporters (SPEC v2 §7.2, §8). An exporter turns the eden into files in the
+ * eden's `exports/` folder. Universal formats ship with the app; medium
  * conventions (Fountain, Ren'Py, …) arrive through this same hook in plugins.
  */
 
@@ -15,9 +15,14 @@ export interface ExportFormat {
 }
 
 export interface ExportRunContext {
-  /** Eden-relative path of the project being exported. */
+  /**
+   * Eden-relative path of the story being exported — the eden root ("."),
+   * since one eden is one story.
+   */
   projectPath: string;
-  /** Eden-relative path of the output folder (usually `<project>/exports`). */
+  /** Display name of the story being exported (the eden's name). */
+  projectName?: string;
+  /** Eden-relative path of the output folder (the eden's `exports/`). */
   outputDir: string;
   /** Structure-node ids selected in the export dialog; empty = everything. */
   scope: string[];
@@ -30,7 +35,7 @@ export interface ExportRunContext {
   renderPdf(html: string, outRelPath: string): Promise<void>;
   /**
    * Write a zip archive of export files (eden-relative out path). Paths
-   * inside the archive are relative to the project root.
+   * inside the archive are relative to the eden root.
    */
   writeZip(
     entries: { path: string; data: string | Uint8Array }[],
@@ -46,8 +51,8 @@ export interface ExporterDefinition {
   description?: string;
   /**
    * Medium tags this exporter serves ("prose", "screenplay", "comic", …).
-   * Its formats appear in a project's export dialog when the project
-   * preset's `medium` matches. Omit for universal exporters.
+   * Its formats appear in the export dialog when the eden preset's `medium`
+   * matches. Omit for universal exporters.
    */
   media?: string[];
   formats: ExportFormat[];

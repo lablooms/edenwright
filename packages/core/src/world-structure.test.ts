@@ -1,46 +1,25 @@
 import { describe, expect, it } from "vitest";
 
-import { createWorld, listWorlds } from "./world-structure.js";
-import { EdenwrightError } from "./errors.js";
+import { ensureWorldDirs, WORLD_SUBDIRS } from "./world-structure.js";
 import { InMemoryFileSystemAdapter } from "./testing/in-memory-fs.js";
 
-describe("createWorld", () => {
-  it("lays down the SPEC §5.5 world structure with a valid manifest", async () => {
+describe("ensureWorldDirs", () => {
+  it("creates world/codex|notes|maps under the eden root", async () => {
     const fs = new InMemoryFileSystemAdapter();
-    const manifest = await createWorld(fs, "/eden", "Aster Reach");
-
-    expect(manifest.id).toMatch(/^wld_[0-9a-z]{8}$/);
-    for (const dir of ["codex", "notes", "maps"]) {
-      expect(await fs.exists(`/eden/Worlds/Aster Reach/${dir}`)).toBe(true);
+    await ensureWorldDirs(fs, "/eden");
+    for (const subdir of WORLD_SUBDIRS) {
+      expect(await fs.exists(`/eden/world/${subdir}`)).toBe(true);
     }
-    const written = JSON.parse(
-      await fs.readFile("/eden/Worlds/Aster Reach/world.json"),
-    );
-    expect(written).toEqual(manifest);
   });
 
-  it("refuses a duplicate world folder", async () => {
+  it("is idempotent and heals hand-made gaps without touching content", async () => {
     const fs = new InMemoryFileSystemAdapter();
-    await fs.writeFile("/eden/Worlds/Taken/keep.txt", "mine");
-    await expect(createWorld(fs, "/eden", "Taken")).rejects.toThrow(
-      EdenwrightError,
-    );
-  });
-});
+    await fs.writeFile("/eden/world/codex/yuki.md", "# Yuki");
+    await ensureWorldDirs(fs, "/eden");
+    await ensureWorldDirs(fs, "/eden");
 
-describe("listWorlds", () => {
-  it("returns valid manifests sorted, skipping non-worlds", async () => {
-    const fs = new InMemoryFileSystemAdapter();
-    await createWorld(fs, "/eden", "B World");
-    await createWorld(fs, "/eden", "A World");
-    await fs.writeFile("/eden/Worlds/random/readme.md", "hi");
-
-    const worlds = await listWorlds(fs, "/eden");
-    expect(worlds.map((world) => world.name)).toEqual(["A World", "B World"]);
-  });
-
-  it("returns empty without a Worlds dir", async () => {
-    const fs = new InMemoryFileSystemAdapter();
-    expect(await listWorlds(fs, "/nowhere")).toEqual([]);
+    expect(await fs.readFile("/eden/world/codex/yuki.md")).toBe("# Yuki");
+    expect(await fs.exists("/eden/world/notes")).toBe(true);
+    expect(await fs.exists("/eden/world/maps")).toBe(true);
   });
 });

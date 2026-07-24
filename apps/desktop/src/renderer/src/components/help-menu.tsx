@@ -4,6 +4,7 @@ import {
   Bug,
   CircleHelp,
   ExternalLink,
+  GraduationCap,
   RefreshCw,
   Wrench,
 } from "lucide-react";
@@ -13,6 +14,7 @@ import { BloomIcon, Button, Icon } from "@edenwright/ui";
 import { useAppStore } from "../store";
 import { useChromeStore } from "../chrome-store";
 import { checkForUpdatesManual, showNewerModal } from "../updates";
+import { WritingGuide } from "./writing-guide";
 
 import "./help-menu.css";
 
@@ -48,6 +50,8 @@ export function HelpMenu() {
   const [open, setOpen] = useState(false);
   const aboutOpen = useChromeStore((state) => state.aboutOpen);
   const setAboutOpen = useChromeStore((state) => state.setAboutOpen);
+  const guideOpen = useChromeStore((state) => state.guideOpen);
+  const setGuideOpen = useChromeStore((state) => state.setGuideOpen);
   const wrapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -105,6 +109,16 @@ export function HelpMenu() {
             role="menuitem"
             onClick={() => {
               setOpen(false);
+              setGuideOpen(true);
+            }}
+          >
+            <Icon icon={GraduationCap} size={14} /> Writing guide
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
               setAboutOpen(true);
             }}
           >
@@ -152,6 +166,7 @@ export function HelpMenu() {
         </div>
       ) : null}
       {aboutOpen ? <AboutDialog /> : null}
+      {guideOpen ? <WritingGuide /> : null}
     </div>
   );
 }

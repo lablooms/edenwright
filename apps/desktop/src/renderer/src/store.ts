@@ -3,11 +3,11 @@ import type { ModalOptions } from "@edenwright/plugin-api";
 import { create } from "zustand";
 
 import type {
+  CreateEdenInput,
   EdenEventPayload,
+  EdenManifestInfo,
   EdenStateInfo,
-  ProjectInfo,
   TreeNode,
-  WorldInfo,
 } from "../../preload/api";
 
 export interface Toast {
@@ -25,6 +25,12 @@ export interface OpenFile {
 }
 
 let toastSeq = 0;
+/**
+ * Monotonic guard for refreshTree: watcher events, eden-opened, and UI
+ * actions all trigger refreshes that race over IPC. Only the newest response
+ * may land — a stale one would flap rows back into existence mid-click.
+ */
+let treeRefreshSeq = 0;
 
 /** Strip Electron's IPC wrapper so users see our message, not the plumbing. */
 export function ipcErrorMessage(error: unknown): string {
@@ -38,6 +44,10 @@ export function ipcErrorMessage(error: unknown): string {
 interface AppState {
   /** null until the first state fetch resolves. */
   edenState: EdenStateInfo | null;
+  /** eden.json of the open eden — goals, order, preset, medium. */
+  edenManifest: EdenManifestInfo | null;
+  /** Last failed open's message — the launcher shows it inline. */
+  edenOpenError: string | null;
   tree: TreeNode[];
   openFile: OpenFile | null;
   expanded: Set<string>;
@@ -45,7 +55,7 @@ interface AppState {
   creationDir: string | null;
   toasts: Toast[];
   indexing: { done: number; total: number } | null;
-  sideView: "files" | "search" | "codex" | "worlds" | "themes";
+  sideView: "files" | "search" | "world" | "themes";
   paletteOpen: boolean;
   /** Incremented to (re)focus the search input. */
   searchFocusSeq: number;
@@ -54,10 +64,7 @@ interface AppState {
   reveal: { path: string; term: string } | null;
   settingsOpen: boolean;
   settingsInitialTab: string | null;
-  newProjectOpen: boolean;
   exportOpen: boolean;
-  projects: ProjectInfo[];
-  worlds: WorldInfo[];
   /** Codex sheets open in source (raw markdown) mode when true. */
   editSource: boolean;
   /** What the main area shows; opening a file returns to the editor. */
@@ -72,9 +79,15 @@ interface AppState {
   dismissToast(id: number): void;
 
   refreshTree(): Promise<void>;
-  createEden(parentDir: string, name: string): Promise<boolean>;
+  createEden(
+    parentDir: string,
+    name: string,
+    input: CreateEdenInput,
+  ): Promise<boolean>;
   openEden(path: string): Promise<boolean>;
   closeEden(): Promise<void>;
+  /** Forget a recents entry; the eden's files stay on disk. */
+  removeRecentEden(path: string): Promise<void>;
 
   openFileAt(path: string): Promise<void>;
   closeFile(): void;
@@ -84,15 +97,13 @@ interface AppState {
   toggleExpanded(path: string): void;
   setCreationDir(path: string | null): void;
   refreshEdenState(): Promise<void>;
-  setSideView(view: "files" | "search" | "codex" | "worlds" | "themes"): void;
+  refreshManifest(): Promise<void>;
+  setSideView(view: "files" | "search" | "world" | "themes"): void;
   setPaletteOpen(open: boolean): void;
   setSettingsOpen(open: boolean, initialTab?: string): void;
-  setNewProjectOpen(open: boolean): void;
   setExportOpen(open: boolean): void;
   setEditSource(editSource: boolean): void;
   setMainView(view: "editor" | "timeline" | "corkboard"): void;
-  refreshProjects(): Promise<void>;
-  refreshWorlds(): Promise<void>;
   showModal(options: ModalOptions): Promise<string | null>;
   bumpSearchFocus(): void;
   toggleFocusMode(currentWords: number): void;
@@ -105,9 +116,11 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set, get) => ({
   edenState: null,
+  edenManifest: null,
+  edenOpenError: null,
   tree: [],
   openFile: null,
-  expanded: new Set(["Projects", "Worlds"]),
+  expanded: new Set(["world"]),
   creationDir: null,
   toasts: [],
   indexing: null,
@@ -119,17 +132,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   reveal: null,
   settingsOpen: false,
   settingsInitialTab: null,
-  newProjectOpen: false,
   exportOpen: false,
-  projects: [],
-  worlds: [],
   editSource: false,
   mainView: "editor",
   modalRequest: null,
 
   async init() {
     const state = await window.edenwright.eden.state();
-    set({ edenState: state });
+    set({ edenState: state, edenManifest: state.current?.manifest ?? null });
     if (state.current) await get().refreshTree();
   },
 
@@ -146,17 +156,21 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   async refreshTree() {
+    const seq = ++treeRefreshSeq;
     const tree = await window.edenwright.eden.tree();
+    if (seq !== treeRefreshSeq) return; // a newer refresh is on its way
     set({ tree });
   },
 
   async refreshEdenState() {
     const state = await window.edenwright.eden.state();
-    set({ edenState: state });
+    set({ edenState: state, edenManifest: state.current?.manifest ?? null });
   },
 
-  setNewProjectOpen(open) {
-    set({ newProjectOpen: open });
+  async refreshManifest() {
+    if (!get().edenState?.current) return;
+    const manifest = await window.edenwright.eden.manifest();
+    set({ edenManifest: manifest });
   },
 
   setExportOpen(open) {
@@ -171,20 +185,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ mainView: view });
   },
 
-  async refreshProjects() {
-    const projects = await window.edenwright.projects.list();
-    set({ projects });
-  },
-
-  async refreshWorlds() {
-    const worlds = await window.edenwright.worlds.list();
-    set({ worlds });
-  },
-
-  async createEden(parentDir, name) {
+  async createEden(parentDir, name, input) {
     try {
-      const state = await window.edenwright.eden.create(parentDir, name);
-      set({ edenState: state, openFile: null });
+      const state = await window.edenwright.eden.create(parentDir, name, input);
+      set({
+        edenState: state,
+        edenManifest: state.current?.manifest ?? null,
+        openFile: null,
+        edenOpenError: null,
+      });
       await get().refreshTree();
       get().toast(`Welcome to ${name}. Plant your first file.`);
       return true;
@@ -195,22 +204,38 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   async openEden(path) {
+    set({ edenOpenError: null });
     try {
       const state = await window.edenwright.eden.open(path);
-      set({ edenState: state, openFile: null });
+      set({
+        edenState: state,
+        edenManifest: state.current?.manifest ?? null,
+        openFile: null,
+      });
       await get().refreshTree();
       return true;
     } catch (error) {
-      get().toast(ipcErrorMessage(error), "warn");
+      // Toast and inline (launcher) — a failed open explains itself in place.
+      const message = ipcErrorMessage(error);
+      set({ edenOpenError: message });
+      get().toast(message, "warn");
       return false;
     }
   },
 
   async closeEden() {
     await window.edenwright.eden.close();
-    set({ openFile: null, tree: [] });
+    // Invalidate any refresh in flight — it must not land after the wipe.
+    treeRefreshSeq += 1;
+    set({ openFile: null, tree: [], edenManifest: null, edenOpenError: null });
     const state = await window.edenwright.eden.state();
     set({ edenState: state });
+  },
+
+  async removeRecentEden(path) {
+    const recents = await window.edenwright.eden.removeRecent(path);
+    const state = get().edenState;
+    if (state) set({ edenState: { ...state, recents } });
   },
 
   async openFileAt(path) {
@@ -369,26 +394,29 @@ export const useAppStore = create<AppState>((set, get) => ({
         // Eden state changed outside renderer actions (e.g. bridge calls) —
         // never rely on startup timing to learn it.
         const state = await window.edenwright.eden.state();
-        set({ edenState: state });
+        set({
+          edenState: state,
+          edenManifest: state.current?.manifest ?? null,
+        });
         await refreshTree();
-        await get().refreshProjects();
-        await get().refreshWorlds();
         break;
       }
       case "eden-closed": {
         const state = await window.edenwright.eden.state();
-        set({ edenState: state, openFile: null, tree: [] });
+        treeRefreshSeq += 1; // in-flight refreshes must not land after this
+        set({ edenState: state, edenManifest: null, openFile: null, tree: [] });
         break;
       }
       case "settings-changed": {
         const state = await window.edenwright.eden.state();
-        set({ edenState: state });
+        set({
+          edenState: state,
+          edenManifest: state.current?.manifest ?? null,
+        });
         break;
       }
       case "tree-changed":
         await refreshTree();
-        await get().refreshProjects();
-        await get().refreshWorlds();
         break;
       case "file-changed": {
         if (!openFile || openFile.path !== payload.path) break;

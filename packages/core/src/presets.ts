@@ -15,7 +15,6 @@ export interface BuiltinPreset {
   structure: { id: string; label: string; required?: boolean }[];
   defaultFields: Record<string, unknown>;
   scaffold: { path: string; contents?: string }[];
-  home?: "projects" | "worlds";
   exportDefaults?: string[];
   suggestedPlugins?: string[];
 }
@@ -321,7 +320,6 @@ export const BUILTIN_PRESETS: BuiltinPreset[] = [
     structure: [{ id: "codex", label: "Codex", required: true }],
     defaultFields: {},
     scaffold: [],
-    home: "worlds",
     exportDefaults: ["pdf", "docx"],
   },
 ];

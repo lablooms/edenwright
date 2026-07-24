@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { assetUrl, compareVersions } from "./registry-client";
+import { assetUrl, compareVersions } from "./themes-registry";
 
-describe("registry client", () => {
+describe("themes registry client", () => {
   it("assetUrl builds a release-download URL", () => {
     expect(
       assetUrl(
@@ -15,10 +15,10 @@ describe("registry client", () => {
           repo: "lablooms/edenwright",
           releaseTag: "seed-x-v1.0.0",
         },
-        "main.js",
+        "theme.css",
       ),
     ).toBe(
-      "https://github.com/lablooms/edenwright/releases/download/seed-x-v1.0.0/main.js",
+      "https://github.com/lablooms/edenwright/releases/download/seed-x-v1.0.0/theme.css",
     );
   });
 

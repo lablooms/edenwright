@@ -6,7 +6,7 @@ import type { Disposable } from "./disposable.js";
  * structure, defaults, scaffold. Community presets ship with zero code.
  */
 
-/** One level of a project's structure tree, e.g. "Part", "Chapter", "Scene". */
+/** One level of a story's structure tree, e.g. "Part", "Chapter", "Scene". */
 export interface StructureLevel {
   id: string;
   label: string;
@@ -14,9 +14,9 @@ export interface StructureLevel {
   required?: boolean;
 }
 
-/** A file or folder stamped when a project is created from the preset. */
+/** A file or folder stamped when an eden is created from the preset. */
 export interface ScaffoldEntry {
-  /** Project-relative path (folder when `contents` is omitted). */
+  /** Eden-relative path (folder when `contents` is omitted). */
   path: string;
   contents?: string;
 }
@@ -36,13 +36,16 @@ export interface PresetDefinition {
   medium: string;
   /** What this medium calls its documents ("Scene"/"Scenes", "Page"/"Pages"). */
   terminology: { document: string; documents: string };
-  /** The preset's structure tree (folders in the project). */
+  /** The preset's structure tree (folders at the eden root). */
   structure: StructureLevel[];
   /** Default frontmatter field values stamped on new documents. */
   defaultFields: Record<string, unknown>;
-  /** Files/folders created with the project. */
+  /** Files/folders created with the eden. */
   scaffold: ScaffoldEntry[];
-  /** Where the preset's works live: `Projects/` or `Worlds/`. */
+  /**
+   * @deprecated Pre-collapse concept (`Projects/` vs `Worlds/`). One eden is
+   * one story now — the scaffold always stamps at the eden root.
+   */
   home?: "projects" | "worlds";
   /** Preferred export format ids; the first is the dialog's default. */
   exportDefaults?: string[];

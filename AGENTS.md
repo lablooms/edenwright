@@ -4,7 +4,7 @@ Standing law for AI agents working in this repository. `SPEC.md` is the full spe
 
 ## What this is
 
-Edenwright — an open-source desktop studio for every kind of story (novels, comics, screenplays, story-games, worldbuilding). Second app from Lablooms Studio. One unified writer, presets as data, community plugins for medium powers. Electron shell, portable TypeScript core, plain files on disk. Target: `0.1.0-beta` on Windows, Linux, macOS. License: MIT, everything.
+Edenwright — an open-source desktop studio for every kind of story (novels, comics, screenplays, story-games, worldbuilding). Second app from Lablooms Studio. One unified writer, presets as data, one eden = one story. Medium powers ship as built-in **core plugins** on the public API; community plugins are deferred to post-beta (community themes remain, registry data kept for the return). Electron shell, portable TypeScript core, plain files on disk. Target: `0.1.0-beta` on Windows, Linux, macOS. License: MIT, everything.
 
 (Iteration one — the engine model — was a prototype and was deleted; a local-only reference branch `archive/engines-model` exists for porting. Never push it.)
 
@@ -16,7 +16,7 @@ Edenwright — an open-source desktop studio for every kind of story (novels, co
 4. **Dogfood the plugin API.** Medium powers (screenplay mode, comic rail, story canvas, medium exporters) are plugins on the public API. If a plugin needs something the API can't do, extend the API — never a private backdoor.
 5. **No gray boxes.** All colors from CSS custom properties (SPEC v1 §3.1, kept). No hardcoded hex in components. Every empty state, loading state, and error state is designed. Dark-first Edenwright theme.
 6. **Vocabulary law.** Exactly two brand words in the UI: **eden** (workspace) and **codex** (entity layer). Everything else is plain English: Projects, Worlds, Plugins, Themes, History, Search. Never invent additional archaic terms.
-7. **Privacy is absolute.** No telemetry, no analytics, no network calls except: registry fetches (community tab) and update check. Both fail silently offline.
+7. **Privacy is absolute.** No telemetry, no analytics, no network calls except: the community-themes registry fetch and the update check. Both fail silently offline. (The community-plugin registry fetch is deferred to post-beta with the community plugins UI.)
 8. **Never lose a word.** When in doubt between data safety and anything else, data safety wins.
 
 ## Stack

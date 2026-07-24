@@ -12,11 +12,12 @@ declare global {
       app: {
         getState(): {
           setMainView(view: "editor" | "timeline" | "corkboard"): void;
-          setSideView(
-            view: "files" | "search" | "codex" | "worlds" | "themes",
-          ): void;
+          setSideView(view: "files" | "search" | "world" | "themes"): void;
           setExportOpen(open: boolean): void;
+          setSettingsOpen(open: boolean, initialTab?: string): void;
           openFileAt(path: string): Promise<void>;
+          toggleExpanded(path: string): void;
+          refreshManifest(): Promise<void>;
         };
       };
       themes: {

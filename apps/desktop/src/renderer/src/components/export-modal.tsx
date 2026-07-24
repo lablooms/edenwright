@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@edenwright/ui";
 
@@ -11,8 +11,7 @@ import "./export-modal.css";
 export function ExportModal() {
   const exportOpen = useAppStore((state) => state.exportOpen);
   const setExportOpen = useAppStore((state) => state.setExportOpen);
-  const openFile = useAppStore((state) => state.openFile);
-  const projects = useAppStore((state) => state.projects);
+  const edenManifest = useAppStore((state) => state.edenManifest);
   const toast = useAppStore((state) => state.toast);
   const exporters = usePluginStore((state) => state.exporters);
 
@@ -20,17 +19,10 @@ export function ExportModal() {
   const [busy, setBusy] = useState(false);
   const [doneFiles, setDoneFiles] = useState<string[] | null>(null);
 
-  const project = useMemo(() => {
-    if (!openFile) return undefined;
-    const segments = openFile.path.split("/");
-    if (segments[0] !== "Projects") return undefined;
-    return projects.find((item) => item.name === segments[1]);
-  }, [openFile, projects]);
-
   // Universal exporters (no media tag) plus exporters whose media includes
-  // this project preset's medium (SPEC v2 §8) — formats merge, first wins.
+  // the eden preset's medium (SPEC v2 §8) — formats merge, first wins.
   const matching = exporters.filter(
-    (item) => !item.media || item.media.includes(project?.medium ?? ""),
+    (item) => !item.media || item.media.includes(edenManifest?.medium ?? ""),
   );
   const formats = matching
     .flatMap((item) => item.formats)
@@ -52,12 +44,11 @@ export function ExportModal() {
   };
 
   const run = async () => {
-    if (!exporter || !chosenFormat || !project || busy) return;
+    if (!exporter || !chosenFormat || !edenManifest || busy) return;
     setBusy(true);
     try {
-      await runExport(exporter, chosenFormat.id, project);
-      const outputDir = `Projects/${project.name}/exports`;
-      const entries = await window.edenwright.pluginfs.list(outputDir);
+      await runExport(exporter, chosenFormat.id, edenManifest);
+      const entries = await window.edenwright.pluginfs.list("exports");
       setDoneFiles(
         entries
           .filter(
@@ -80,13 +71,12 @@ export function ExportModal() {
         if (event.target === event.currentTarget) close();
       }}
     >
-      <div className="export-modal" role="dialog" aria-label="Export project">
-        {!project || !exporter ? (
+      <div className="export-modal" role="dialog" aria-label="Export eden">
+        {!edenManifest || !exporter ? (
           <>
             <h2 className="export-modal__title">Nothing to export here.</h2>
             <p className="export-modal__note">
-              Open a file inside a project and its formats appear in this
-              dialog.
+              Open an eden and its formats appear in this dialog.
             </p>
             <div className="export-modal__actions">
               <Button variant="ghost" onClick={close}>
@@ -97,7 +87,7 @@ export function ExportModal() {
         ) : doneFiles ? (
           <>
             <h2 className="export-modal__title">
-              {project.name} → {chosenFormat?.label}
+              {edenManifest.name} → {chosenFormat?.label}
             </h2>
             <ul className="export-modal__files">
               {doneFiles.map((file) => (
@@ -110,11 +100,7 @@ export function ExportModal() {
             <div className="export-modal__actions">
               <Button
                 variant="ghost"
-                onClick={() =>
-                  void window.edenwright.app.revealPath(
-                    `Projects/${project.name}/exports`,
-                  )
-                }
+                onClick={() => void window.edenwright.app.revealPath("exports")}
               >
                 Reveal in folder
               </Button>
@@ -123,7 +109,7 @@ export function ExportModal() {
           </>
         ) : (
           <>
-            <h2 className="export-modal__title">Export {project.name}</h2>
+            <h2 className="export-modal__title">Export {edenManifest.name}</h2>
 
             <div className="export-modal__section">
               <span className="export-modal__label">Format</span>
@@ -145,7 +131,7 @@ export function ExportModal() {
             <div className="export-modal__section">
               <span className="export-modal__label">Scope</span>
               <p className="export-modal__note">
-                Whole project (scopes arrive with structure-aware exports).
+                Whole eden (scopes arrive with structure-aware exports).
               </p>
             </div>
 

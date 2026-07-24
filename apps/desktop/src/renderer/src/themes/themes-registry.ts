@@ -1,14 +1,16 @@
-import pluginsFixture from "../../../../../../registry/community-plugins.json";
 import themesFixture from "../../../../../../registry/community-themes.json";
 
 /**
- * Registry client (SPEC §9.4). The community tab reads two JSON indexes;
- * the fetch is one of only two sanctioned network calls (golden rule 6) and
- * falls back to the bundled copy of the registry when offline — the tab is
- * never empty, and failure is always silent.
+ * Community themes registry client (SPEC §9.4). The themes panel reads one
+ * JSON index; the fetch is one of only two sanctioned network calls (golden
+ * rule 7) and falls back to the bundled copy of the registry when offline —
+ * the panel is never empty, and failure is always silent.
+ *
+ * (R5: the plugins half of the old registry client is gone — community
+ * plugins are deferred to post-beta; this file is themes-only.)
  */
 
-export interface RegistryEntry {
+export interface ThemeRegistryEntry {
   id: string;
   name: string;
   version: string;
@@ -16,7 +18,7 @@ export interface RegistryEntry {
   author: string;
   /** "owner/name" — release assets ship from this repo's releases. */
   repo: string;
-  /** Tag of the release holding manifest.json + payload assets. */
+  /** Tag of the release holding manifest.json + theme.css. */
   releaseTag: string;
   /**
    * First-party seeds ship inside the app — bundled installs work offline
@@ -26,43 +28,31 @@ export interface RegistryEntry {
   screenshots?: string[];
 }
 
-export interface RegistryResult {
-  entries: RegistryEntry[];
+export interface ThemeRegistryResult {
+  entries: ThemeRegistryEntry[];
   /** "fixture" means the network said no — show the offline hint. */
   source: "remote" | "fixture";
 }
 
-export type RegistryKind = "plugins" | "themes";
-
-const REGISTRY_BASE =
-  "https://raw.githubusercontent.com/lablooms/edenwright-registry/main";
+const REGISTRY_URL =
+  "https://raw.githubusercontent.com/lablooms/edenwright-registry/main/community-themes.json";
 const FETCH_TIMEOUT_MS = 5000;
 
-const FIXTURES: Record<RegistryKind, { entries: RegistryEntry[] }> = {
-  plugins: pluginsFixture,
-  themes: themesFixture,
-};
+const FIXTURE = themesFixture as { entries: ThemeRegistryEntry[] };
 
-async function fetchJson(url: string): Promise<unknown> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+export async function fetchThemeRegistry(): Promise<ThemeRegistryResult> {
+  const bundled = FIXTURE.entries.filter((entry) => entry.bundled);
   try {
-    const response = await fetch(url, { signal: controller.signal });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.json();
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-export async function fetchRegistry(
-  kind: RegistryKind,
-): Promise<RegistryResult> {
-  const bundled = FIXTURES[kind].entries.filter((entry) => entry.bundled);
-  try {
-    const raw = (await fetchJson(
-      `${REGISTRY_BASE}/community-${kind}.json`,
-    )) as { entries?: RegistryEntry[] };
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    let raw: { entries?: ThemeRegistryEntry[] };
+    try {
+      const response = await fetch(REGISTRY_URL, { signal: controller.signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      raw = (await response.json()) as { entries?: ThemeRegistryEntry[] };
+    } finally {
+      clearTimeout(timer);
+    }
     if (!Array.isArray(raw.entries)) throw new Error("bad registry shape");
     // Bundled first-party wins by id — a stale remote can't shadow seeds
     // the app already carries.
@@ -71,20 +61,27 @@ export async function fetchRegistry(
     );
     return { entries: [...bundled, ...remote], source: "remote" };
   } catch {
-    return { entries: FIXTURES[kind].entries, source: "fixture" };
+    return { entries: FIXTURE.entries, source: "fixture" };
   }
 }
 
 /** Direct download URL of one release asset for an entry. */
-export function assetUrl(entry: RegistryEntry, fileName: string): string {
+export function assetUrl(entry: ThemeRegistryEntry, fileName: string): string {
   return `https://github.com/${entry.repo}/releases/download/${entry.releaseTag}/${fileName}`;
 }
 
-/** Download one asset as text; throws on any failure (caller designs the error). */
-export async function fetchAssetText(
-  entry: RegistryEntry,
+/**
+ * Read one payload file for a registry entry — from the app bundle for
+ * first-party seeds (offline by construction), from release assets for
+ * third-party entries (SPEC v2 §7).
+ */
+export async function readThemeAsset(
+  entry: ThemeRegistryEntry,
   fileName: string,
 ): Promise<string> {
+  if (entry.bundled) {
+    return window.edenwright.app.readBundled(`${entry.bundled}/${fileName}`);
+  }
   const response = await fetch(assetUrl(entry, fileName));
   if (!response.ok) {
     throw new Error(

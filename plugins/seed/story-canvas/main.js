@@ -37,8 +37,8 @@ function serializeNodeFile(data) {
 
 /* ===========================================================================
  * The story-graph file format (ported from engines/storygraph/graph-model.ts):
- * `graph.json` at the project root; each node's prose lives in its own
- * project-relative markdown file.
+ * `graph.json` at the eden root; each node's prose lives in its own
+ * eden-relative markdown file.
  * ======================================================================== */
 
 function createEmptyGraph() {
@@ -122,51 +122,23 @@ function nextNodePosition(graph) {
  *
  * v1 stored eden-relative paths in node.file, which its own exporter could
  * never resolve (it joins projectPath + file). Here node.file stays
- * project-relative, matching the exporters and the v1 test fixtures; the
- * view joins the project dir itself when it touches the disk.
+ * eden-relative — one eden = one story, and graph.json sits at the eden root.
  * ------------------------------------------------------------------------ */
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const NODE_WIDTH = 160;
 const NODE_HEIGHT = 56;
+const GRAPH_PATH = "graph.json";
 
-/** Find the first story-graph project (owns a graph.json). */
-async function findGraphProject(ctx) {
-  let entries;
-  try {
-    entries = await ctx.eden.fs.list("Projects");
-  } catch {
-    return null;
+/** The eden's graph.json, creating an empty one when the preset didn't. */
+async function ensureGraph(ctx) {
+  if (!(await ctx.eden.fs.exists(GRAPH_PATH))) {
+    await ctx.eden.fs.writeFile(GRAPH_PATH, serializeGraph(createEmptyGraph()));
   }
-  for (const entry of entries) {
-    if (entry.kind !== "directory") continue;
-    const graphPath = `Projects/${entry.name}/graph.json`;
-    if (await ctx.eden.fs.exists(graphPath)) {
-      return { name: entry.name, dir: `Projects/${entry.name}`, graphPath };
-    }
-  }
-  return null;
-}
-
-/** Create graph.json for the first story-graph project missing one. */
-async function ensureGraphProject(ctx) {
-  const existing = await findGraphProject(ctx);
-  if (existing) return existing;
-  let entries;
-  try {
-    entries = await ctx.eden.fs.list("Projects");
-  } catch {
-    return null;
-  }
-  const dir = entries.find((entry) => entry.kind === "directory");
-  if (!dir) return null;
-  const graphPath = `Projects/${dir.name}/graph.json`;
-  await ctx.eden.fs.writeFile(graphPath, serializeGraph(createEmptyGraph()));
-  return { name: dir.name, dir: `Projects/${dir.name}`, graphPath };
+  return { graphPath: GRAPH_PATH };
 }
 
 function renderGraphView(ctx, element) {
-  let project = null;
   let graph = null;
   let pan = { x: 0, y: 0 };
   let zoom = 1;
@@ -206,13 +178,11 @@ function renderGraphView(ctx, element) {
 
   const persist = async (next) => {
     graph = next;
-    if (project) {
-      await ctx.eden.fs.writeFile(project.graphPath, serializeGraph(next));
-    }
+    await ctx.eden.fs.writeFile(GRAPH_PATH, serializeGraph(next));
   };
 
   const renderGraph = () => {
-    if (disposed || !project || !graph) return;
+    if (disposed || !graph) return;
 
     zoomLabel.textContent = `${Math.round(zoom * 100)}%`;
     walkButton.disabled = graph.nodes.length === 0;
@@ -351,14 +321,14 @@ function renderGraphView(ctx, element) {
   };
 
   const onAddNode = async () => {
-    if (!graph || !project) return;
+    if (!graph) return;
     const position = nextNodePosition(graph);
     const id = newId("nod");
     const title = `Node ${graph.nodes.length + 1}`;
     const file = `manuscript/${title.toLowerCase().replace(/\s+/g, "-")}.md`;
-    await ctx.eden.fs.mkdir(`${project.dir}/manuscript`);
+    await ctx.eden.fs.mkdir("manuscript");
     await ctx.eden.fs.writeFile(
-      `${project.dir}/${file}`,
+      file,
       serializeNodeFile({ id, title, status: "draft" }),
     );
     await persist(
@@ -371,7 +341,7 @@ function renderGraphView(ctx, element) {
     };
     if (disposed) return;
     renderGraph();
-    ctx.workspace.openFile(`${project.dir}/${file}`);
+    ctx.workspace.openFile(file);
   };
 
   const onNodePointerDown = (event, nodeId) => {
@@ -437,7 +407,7 @@ function renderGraphView(ctx, element) {
         if (graph) await persist(graph);
       } else {
         const node = graph?.nodes.find((item) => item.id === nodeId);
-        if (node) ctx.workspace.openFile(`${project.dir}/${node.file}`);
+        if (node) ctx.workspace.openFile(node.file);
       }
     }
     panDrag = null;
@@ -455,18 +425,9 @@ function renderGraphView(ctx, element) {
   );
 
   const load = async () => {
-    project = await ensureGraphProject(ctx);
+    await ensureGraph(ctx);
     if (disposed) return;
-    if (!project) {
-      root.className = "ew-graph ew-graph--empty";
-      root.replaceChildren();
-      const message = document.createElement("p");
-      message.textContent =
-        "No story-graph project here yet — make one from the new-project flow.";
-      root.appendChild(message);
-      return;
-    }
-    const text = await ctx.eden.fs.readFile(project.graphPath);
+    const text = await ctx.eden.fs.readFile(GRAPH_PATH);
     if (disposed) return;
     try {
       graph = parseGraph(JSON.parse(text));

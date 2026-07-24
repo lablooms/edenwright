@@ -1,9 +1,9 @@
 import { useState } from "react";
 
-import { kindFromPath, projectNameFromPath } from "@edenwright/core";
-import { ArrowLeftRight, BookPlus, FilePlus, FolderPlus } from "lucide-react";
+import { kindFromPath } from "@edenwright/core";
+import { FilePlus, FolderPlus } from "lucide-react";
 
-import { BloomIcon, Icon } from "@edenwright/ui";
+import { Icon } from "@edenwright/ui";
 
 import { newFileTemplate } from "../lib/file-template";
 import { ipcErrorMessage, useAppStore } from "../store";
@@ -11,32 +11,26 @@ import { usePluginStore } from "../plugins/plugin-store";
 import { FileTree } from "./file-tree";
 import "./files-panel.css";
 
-/** Left panel: eden identity, file creation, the tree, index progress. */
+/** Left panel: file creation, the tree, index progress. */
 export function FilesPanel() {
-  const edenState = useAppStore((state) => state.edenState);
+  const edenManifest = useAppStore((state) => state.edenManifest);
   const indexing = useAppStore((state) => state.indexing);
   const openFile = useAppStore((state) => state.openFile);
-  const closeEden = useAppStore((state) => state.closeEden);
   const refreshTree = useAppStore((state) => state.refreshTree);
   const openFileAt = useAppStore((state) => state.openFileAt);
   const toast = useAppStore((state) => state.toast);
 
   const [creating, setCreating] = useState<"file" | "folder" | null>(null);
   const [name, setName] = useState("");
-  const projects = useAppStore((state) => state.projects);
-  const worlds = useAppStore((state) => state.worlds);
-  const setNewProjectOpen = useAppStore((state) => state.setNewProjectOpen);
   const presets = usePluginStore((state) => state.presets);
 
-  const edenName = edenState?.current?.info.name ?? "eden";
+  // The eden name lives in the title-bar switcher — the one canonical spot.
   const creationDir = useAppStore((state) => state.creationDir);
   // New things grow in the last-clicked tree folder, else next to the open
-  // file, else at Projects/ by default.
+  // file, else at the eden root.
   const targetDir =
     creationDir ??
-    (openFile
-      ? openFile.path.slice(0, openFile.path.lastIndexOf("/"))
-      : "Projects");
+    (openFile ? openFile.path.slice(0, openFile.path.lastIndexOf("/")) : null);
 
   const submit = async () => {
     const trimmed = name.trim();
@@ -48,16 +42,15 @@ export function FilesPanel() {
       toast("One name at a time — no slashes.", "warn");
       return;
     }
-    const relPath =
+    const fileName =
       mode === "file" && !trimmed.toLowerCase().endsWith(".md")
-        ? `${targetDir}/${trimmed}.md`
-        : `${targetDir}/${trimmed}`;
+        ? `${trimmed}.md`
+        : trimmed;
+    const relPath = targetDir ? `${targetDir}/${fileName}` : fileName;
     try {
       if (mode === "file") {
-        // Stamp the preset's default fields when inside a project (§6).
-        const projectName = projectNameFromPath(relPath);
-        const project = projects.find((item) => item.name === projectName);
-        const preset = presets.find((item) => item.id === project?.preset);
+        // Stamp the eden preset's default fields on new documents (§6).
+        const preset = presets.find((item) => item.id === edenManifest?.preset);
         const template = newFileTemplate({
           kind: kindFromPath(relPath),
           name: trimmed.replace(/\.md$/i, ""),
@@ -76,35 +69,14 @@ export function FilesPanel() {
 
   return (
     <div className="files-panel">
-      <div className="files-panel__eden">
-        <BloomIcon size={16} halo={false} />
-        <span className="files-panel__eden-name" title={edenName}>
-          {edenName}
-        </span>
-        <button
-          type="button"
-          className="files-panel__icon-button"
-          title="Switch eden"
-          onClick={() => void closeEden()}
-        >
-          <Icon icon={ArrowLeftRight} size={14} />
-        </button>
-      </div>
-
       <div className="files-panel__toolbar">
         <span className="files-panel__label">Files</span>
         <button
           type="button"
           className="files-panel__icon-button"
-          title="New project…"
-          onClick={() => setNewProjectOpen(true)}
-        >
-          <Icon icon={BookPlus} size={15} />
-        </button>
-        <button
-          type="button"
-          className="files-panel__icon-button"
-          title={`New note in ${targetDir}`}
+          title={
+            targetDir ? `New note in ${targetDir}` : "New note at the root"
+          }
           onClick={() => setCreating("file")}
         >
           <Icon icon={FilePlus} size={15} />
@@ -112,7 +84,9 @@ export function FilesPanel() {
         <button
           type="button"
           className="files-panel__icon-button"
-          title={`New folder in ${targetDir}`}
+          title={
+            targetDir ? `New folder in ${targetDir}` : "New folder at the root"
+          }
           onClick={() => setCreating("folder")}
         >
           <Icon icon={FolderPlus} size={15} />
@@ -143,7 +117,7 @@ export function FilesPanel() {
       ) : null}
 
       <div className="files-panel__tree">
-        <FileTree projects={projects} worlds={worlds} presets={presets} />
+        <FileTree />
       </div>
 
       {indexing ? (

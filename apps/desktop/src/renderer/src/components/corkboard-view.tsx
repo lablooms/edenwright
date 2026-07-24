@@ -21,46 +21,29 @@ function statusClass(status: string | null): string {
   return "ew-status--other";
 }
 
-/** The corkboard (§7.7): one level of a project as index cards, draggable. */
+/** The corkboard (§7.7): the eden's files as index cards, draggable. */
 export function CorkboardView() {
   const openFileAt = useAppStore((state) => state.openFileAt);
   const toast = useAppStore((state) => state.toast);
-  const projects = useAppStore((state) => state.projects);
-  const refreshProjects = useAppStore((state) => state.refreshProjects);
+  const edenManifest = useAppStore((state) => state.edenManifest);
+  const refreshManifest = useAppStore((state) => state.refreshManifest);
 
-  const [filter, setFilter] = useState("");
   const [rows, setRows] = useState<CorkboardRow[]>([]);
   const [order, setOrder] = useState<string[]>([]);
   const dragRef = useRef<{ path: string; startX: number } | null>(null);
   const [dragOver, setDragOver] = useState<string | null>(null);
 
-  const container = filter || null;
-  const project = projects.find(
-    (item) => `Projects/${item.name}` === container,
-  );
-
   const load = useCallback(async () => {
-    const [cards, projectList] = await Promise.all([
-      window.edenwright.query.corkboard(container ?? undefined),
-      window.edenwright.projects.list(),
+    const [cards, manifest] = await Promise.all([
+      window.edenwright.query.corkboard(),
+      window.edenwright.eden.manifest(),
     ]);
     setRows(cards);
-    const owner = projectList.find(
-      (item) => `Projects/${item.name}` === container,
-    );
-    setOrder(owner?.order ?? []);
-  }, [container]);
+    setOrder(manifest.order);
+  }, []);
   useEffect(() => {
     void load();
   }, [load]);
-
-  // Corkboard is per-project (§7.7 "the same level"): default to the first.
-  useEffect(() => {
-    if (filter === "" && projects.length > 0) {
-      setFilter(`Projects/${projects[0].name}`);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projects]);
 
   const cards = useMemo(() => {
     const rank = new Map(order.map((path, index) => [path, index]));
@@ -92,16 +75,10 @@ export function CorkboardView() {
         setDragOver(null);
         if (!drag || !over || over === drag.path) return;
 
-        // Owner resolved through the bridge — the store's project list may
+        // Owner resolved through the bridge — the store's manifest may
         // still be catching up on a cold start.
-        const dragCard = cards.find((card) => card.path === drag.path);
-        const ownerList = await window.edenwright.projects.list();
-        const owner =
-          project ??
-          ownerList.find(
-            (item) => `Projects/${item.name}` === dragCard?.container,
-          );
-        if (!owner) return;
+        const manifest =
+          edenManifest ?? (await window.edenwright.eden.manifest());
 
         const paths = cards.map((card) => card.path);
         const from = paths.indexOf(drag.path);
@@ -109,12 +86,13 @@ export function CorkboardView() {
         if (from === -1 || to === -1) return;
         paths.splice(to, 0, ...paths.splice(from, 1));
         try {
-          await window.edenwright.projects.update(owner.name, {
+          await window.edenwright.eden.saveManifest({
+            ...manifest,
             order: paths,
           });
           setOrder(paths);
-          await refreshProjects();
-          toast("Order saved to project.json.");
+          await refreshManifest();
+          toast("Order saved to eden.json.");
         } catch (error) {
           toast(ipcErrorMessage(error), "warn");
         }
@@ -122,7 +100,7 @@ export function CorkboardView() {
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
     },
-    [cards, project, refreshProjects, toast],
+    [cards, edenManifest, refreshManifest, toast],
   );
 
   return (
@@ -136,25 +114,6 @@ export function CorkboardView() {
         >
           ← Editor
         </button>
-        <button
-          type="button"
-          className="corkboard__chip"
-          data-active={filter === "" || undefined}
-          onClick={() => setFilter("")}
-        >
-          All projects
-        </button>
-        {projects.map((project) => (
-          <button
-            key={project.name}
-            type="button"
-            className="corkboard__chip"
-            data-active={filter === `Projects/${project.name}` || undefined}
-            onClick={() => setFilter(`Projects/${project.name}`)}
-          >
-            {project.name}
-          </button>
-        ))}
       </div>
 
       {cards.length === 0 ? (

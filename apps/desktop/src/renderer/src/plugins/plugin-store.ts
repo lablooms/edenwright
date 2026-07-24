@@ -21,8 +21,6 @@ export interface DiscoveredPlugin {
   dir: string;
   manifest: PluginManifest | null;
   error: string | null;
-  /** First-party (shipped with the app — always on, not uninstallable). */
-  builtin?: boolean;
 }
 
 export type RegisteredView =

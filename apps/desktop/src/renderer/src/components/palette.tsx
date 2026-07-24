@@ -78,15 +78,9 @@ export function Palette() {
         run: () => bumpSearchFocus(),
       },
       {
-        id: "cmd:new-project",
-        section: "Commands",
-        label: "New project…",
-        run: () => useAppStore.getState().setNewProjectOpen(true),
-      },
-      {
         id: "cmd:export",
         section: "Commands",
-        label: "Export project…",
+        label: "Export…",
         run: () => useAppStore.getState().setExportOpen(true),
       },
       {

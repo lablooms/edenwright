@@ -1,30 +1,89 @@
 import type { FileSystemAdapter } from "./adapters/file-system.js";
 import { EdenwrightError } from "./errors.js";
+import { newId } from "./ids.js";
 import {
+  EDEN_EXPORTS_DIR,
+  EDEN_MANIFEST_FILE,
   EDEN_META_DIR,
   EDEN_PLUGINS_DIR,
-  EDEN_PROJECTS_DIR,
   EDEN_SETTINGS_FILE,
   EDEN_SNAPSHOTS_DIR,
   EDEN_THEMES_DIR,
-  EDEN_WORLDS_DIR,
+  EDEN_WELCOME_FILE,
+  LEGACY_PROJECTS_DIR,
   type EdenInfo,
+  type EdenManifest,
 } from "./model/eden.js";
-import { serializeManifest } from "./model/manifests.js";
+import { parseEdenManifest, serializeManifest } from "./model/manifests.js";
 import { joinPath } from "./paths.js";
+import { findBuiltinPreset } from "./presets.js";
 import {
   DEFAULT_EDEN_SETTINGS,
   parseEdenSettings,
   type EdenSettings,
 } from "./settings.js";
+import { ensureWorldDirs } from "./world-structure.js";
 
 /**
- * Creating and recognizing edens (SPEC §5.5). An eden is one normal folder:
- * Projects/, Worlds/, and a `.eden/` for everything machine-managed.
+ * Creating and recognizing edens. An eden is one normal folder and IS the
+ * story: `eden.json` at the root, the preset scaffold stamped beside it,
+ * one fixed `world/` for the codex layer, and a `.eden/` for everything
+ * machine-managed.
  */
 
 const ILLEGAL_NAME_CHARS = /[\\/:*?"<>|]/;
 const RESERVED_NAMES = new Set([".", ".."]);
+
+const EXPORTS_GITIGNORE =
+  "# Generated output — never commit exports.\n*\n!.gitignore\n";
+
+/**
+ * The first-run note, in the preset's own words ("pages" for a manga,
+ * "scenes" for a novel). Plain language for a first-time writer; unknown
+ * (community) presets get the generic phrasing.
+ */
+export function welcomeNoteContents(
+  input: CreateEdenInput,
+  edenName: string,
+): string {
+  const preset = findBuiltinPreset(input.preset);
+  const documents = (
+    preset?.terminology.documents ?? "documents"
+  ).toLowerCase();
+  const homeId = preset?.structure[0]?.id;
+  const homePhrase = homeId
+    ? `the **${homeId}** folder`
+    : "whichever folders you make";
+
+  return (
+    `# Welcome to ${edenName}\n` +
+    `\n` +
+    `This eden is one ordinary folder on your computer — everything in it is\n` +
+    `plain files you own, readable by anything, safe to back up anywhere.\n` +
+    `\n` +
+    `- The file tree on the left is your story: your ${documents} live in ${homePhrase}.\n` +
+    `- The **World** tab keeps your world's people, places, and lore close while you write.\n` +
+    `- Everything saves as you go, and **History** keeps earlier versions within reach.\n` +
+    `\n` +
+    `When you're ready, **Help → Writing guide** has a short, friendly tour.\n`
+  );
+}
+
+export interface ScaffoldInput {
+  /** Eden-relative path (folder when `contents` is omitted). */
+  path: string;
+  contents?: string;
+}
+
+export interface CreateEdenInput {
+  /** Preset id, e.g. "novel", "manga". */
+  preset: string;
+  /** The preset's medium tag, denormalized into the manifest. */
+  medium: string;
+  /** Folders/files stamped from the preset, at the eden root. */
+  scaffold: ScaffoldInput[];
+  description?: string;
+}
 
 /** Trim and validate an eden (folder) name; throws EdenwrightError when bad. */
 export function validateEdenName(name: string): string {
@@ -49,7 +108,8 @@ export async function createEden(
   fs: FileSystemAdapter,
   parentDir: string,
   name: string,
-): Promise<EdenInfo> {
+  input: CreateEdenInput,
+): Promise<{ info: EdenInfo; manifest: EdenManifest }> {
   const validName = validateEdenName(name);
   const root = joinPath(parentDir, validName);
 
@@ -63,8 +123,32 @@ export async function createEden(
     }
   }
 
-  await fs.mkdir(joinPath(root, EDEN_PROJECTS_DIR));
-  await fs.mkdir(joinPath(root, EDEN_WORLDS_DIR));
+  const manifest: EdenManifest = {
+    id: newId("eden"),
+    name: validName,
+    preset: input.preset,
+    medium: input.medium,
+    createdAt: new Date().toISOString(),
+    description: input.description ?? "",
+    goals: {},
+    order: [],
+  };
+
+  for (const entry of input.scaffold) {
+    const target = joinPath(root, entry.path);
+    if (entry.contents === undefined) await fs.mkdir(target);
+    else await fs.writeFile(target, entry.contents);
+  }
+  await fs.writeFile(
+    joinPath(root, EDEN_WELCOME_FILE),
+    welcomeNoteContents(input, validName),
+  );
+  await ensureWorldDirs(fs, root);
+  await fs.mkdir(joinPath(root, EDEN_EXPORTS_DIR));
+  await fs.writeFile(
+    joinPath(root, EDEN_EXPORTS_DIR, ".gitignore"),
+    EXPORTS_GITIGNORE,
+  );
   await fs.mkdir(joinPath(root, EDEN_META_DIR, EDEN_SNAPSHOTS_DIR));
   await fs.mkdir(joinPath(root, EDEN_META_DIR, EDEN_PLUGINS_DIR));
   await fs.mkdir(joinPath(root, EDEN_META_DIR, EDEN_THEMES_DIR));
@@ -72,8 +156,12 @@ export async function createEden(
     joinPath(root, EDEN_META_DIR, EDEN_SETTINGS_FILE),
     serializeManifest(DEFAULT_EDEN_SETTINGS),
   );
+  await fs.writeFile(
+    joinPath(root, EDEN_MANIFEST_FILE),
+    serializeManifest(manifest),
+  );
 
-  return { name: validName, path: root };
+  return { info: { name: validName, path: root }, manifest };
 }
 
 /** True when `path` looks like an eden root (has a `.eden` folder). */
@@ -83,6 +171,41 @@ export async function isEden(
 ): Promise<boolean> {
   const meta = await fs.stat(joinPath(path, EDEN_META_DIR));
   return meta?.kind === "directory";
+}
+
+/**
+ * True when `path` is a pre-collapse eden: recognized as an eden but still
+ * laid out as `Projects/` + `Worlds/` without an `eden.json`.
+ */
+export async function needsMigration(
+  fs: FileSystemAdapter,
+  root: string,
+): Promise<boolean> {
+  if (!(await isEden(fs, root))) return false;
+  if (await fs.exists(joinPath(root, EDEN_MANIFEST_FILE))) return false;
+  const legacyProjects = await fs.stat(joinPath(root, LEGACY_PROJECTS_DIR));
+  return legacyProjects?.kind === "directory";
+}
+
+/** Load and parse `eden.json`. Throws when missing or invalid. */
+export async function loadEdenManifest(
+  fs: FileSystemAdapter,
+  root: string,
+): Promise<EdenManifest> {
+  const text = await fs.readFile(joinPath(root, EDEN_MANIFEST_FILE));
+  return parseEdenManifest(JSON.parse(text));
+}
+
+/** Persist the eden manifest (atomic write, like every file write). */
+export async function saveEdenManifest(
+  fs: FileSystemAdapter,
+  root: string,
+  manifest: EdenManifest,
+): Promise<void> {
+  await fs.writeFile(
+    joinPath(root, EDEN_MANIFEST_FILE),
+    serializeManifest(manifest),
+  );
 }
 
 /**

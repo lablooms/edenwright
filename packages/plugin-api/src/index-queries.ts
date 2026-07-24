@@ -4,7 +4,7 @@
  */
 
 export interface SearchFilter {
-  /** Restrict to one project or world folder. */
+  /** Restrict to one top-level folder of the eden. */
   containerPath?: string;
   /** Filter by frontmatter `status` value. */
   status?: string;
@@ -60,7 +60,7 @@ export interface IndexedEntity {
   id?: string;
   type: string;
   aliases: string[];
-  /** World name when the entity comes from a linked world. */
+  /** Legacy world name when the entity lives in an archived world. */
   world?: string;
 }
 
@@ -70,7 +70,7 @@ export interface IndexQueryApi {
   getBacklinks(filePath: string): Promise<LinkRef[]>;
   getEntityAppearances(entityId: string): Promise<AppearanceRef[]>;
   getFileInfo(path: string): Promise<IndexedFileInfo | null>;
-  /** Per-day word totals for a container (project or world path). */
+  /** Per-day word totals for a container (top-level folder; "." = whole eden). */
   getDailyWords(containerPath: string, days: number): Promise<DailyWordCount[]>;
   /** All indexed entities, optionally scoped to one container. */
   listEntities(containerPath?: string): Promise<IndexedEntity[]>;

@@ -1,25 +1,25 @@
 import type {
-  CreateProjectInput,
+  CreateEdenInput,
   DirEntry,
   EdenInfo,
+  EdenManifest,
   EdenSettings,
   IndexedEntitySummary,
   IndexedFileSummary,
-  ProjectManifest,
   SearchFilter,
   SearchHitRow,
   SnapshotInfo,
   WatchEvent,
   WatchHandle,
-  WorldManifest,
 } from "@edenwright/core";
 import {
+  EDEN_WELCOME_FILE,
   EdenwrightError,
+  basename,
   conflictedCopyName,
   createEden,
-  createProject,
-  createWorld,
   ensureIndexSchema,
+  ensureWorldDirs,
   getBacklinks,
   getEntityAppearances,
   getIndexedFileInfo,
@@ -28,20 +28,20 @@ import {
   isAbsolutePath,
   isEden,
   joinPath,
-  listEntitiesForProject,
-  listIndexedEntities,
+  listEntities,
   listIndexedFiles,
-  listProjects,
-  listWorlds,
+  loadEdenManifest,
   loadEdenSettings,
+  migrateLegacyEden,
+  needsMigration,
   normalizePath,
   rebuildIndex,
   relativePath,
   removeIndexedFile,
   resolveLinkTarget,
+  saveEdenManifest,
   saveEdenSettings,
   searchIndex,
-  serializeManifest,
   walkFiles,
 } from "@edenwright/core";
 import { validatePluginManifest } from "@edenwright/plugin-api";
@@ -55,6 +55,8 @@ import { SnapshotManager } from "./snapshot-manager.js";
 export interface OpenEden {
   info: EdenInfo;
   settings: EdenSettings;
+  /** eden.json — the one manifest of the one story this eden holds. */
+  manifest: EdenManifest;
 }
 
 export interface TreeNode {
@@ -88,15 +90,23 @@ export type EdenServiceEvent =
   | { type: "notice"; message: string };
 
 const WATCH_IGNORE_DIRS = [".eden", ".git", "exports", "node_modules"];
-const CONTENT_ROOTS = ["Projects/", "Worlds/"];
 const INDEX_FILE = "index.db";
 
 function isMarkdown(relPath: string): boolean {
   return relPath.toLowerCase().endsWith(".md");
 }
 
+/**
+ * The index walks the whole eden minus the machine dirs (one eden = one
+ * story), so the watcher's incremental path does the same.
+ */
 function isContentPath(relPath: string): boolean {
-  return CONTENT_ROOTS.some((root) => relPath.startsWith(root));
+  // The first-run welcome note is orientation, not writing: keeping it out
+  // of the index means its words never count toward the writer's goals and
+  // search results stay about their own work. It still shows in the tree.
+  if (relPath === EDEN_WELCOME_FILE) return false;
+  const top = relPath.split("/")[0];
+  return !top.startsWith(".") && !WATCH_IGNORE_DIRS.includes(top);
 }
 
 /** Our atomic-write temp siblings (`.name.<hex>.tmp`) are not events. */
@@ -138,13 +148,17 @@ export class EdenService {
     return this.current;
   }
 
-  async create(parentDir: string, name: string): Promise<OpenEden> {
-    const info = await createEden(this.fs, parentDir, name);
+  async create(
+    parentDir: string,
+    name: string,
+    input: CreateEdenInput,
+  ): Promise<OpenEden> {
+    const { info } = await createEden(this.fs, parentDir, name, input);
     return this.open(info.path);
   }
 
   async open(path: string): Promise<OpenEden> {
-    const root = normalizePath(path);
+    let root = normalizePath(path);
     if (!(await isEden(this.fs, root))) {
       throw new EdenwrightError(
         "IO",
@@ -154,7 +168,27 @@ export class EdenService {
 
     await this.close();
 
-    const settings = await loadEdenSettings(this.fs, root);
+    // Pre-collapse edens (Projects/ + Worlds/, no eden.json) migrate on open.
+    // A split keeps the original as `<name>-legacy` and opens the first new
+    // eden — the writer hears about it once, through the notice channel.
+    let migrationNotice: string | null = null;
+    if (await needsMigration(this.fs, root)) {
+      const report = await migrateLegacyEden(this.fs, root);
+      const inPlace = report.converted.some(
+        (eden) => normalizePath(eden.path) === root,
+      );
+      if (!inPlace) {
+        root = normalizePath(report.converted[0].path);
+        migrationNotice = `Your eden contained several stories — each is now its own eden next to the original, and the original was kept as '${basename(report.legacyBackupPath)}'.`;
+      }
+    }
+
+    // world/{codex,notes,maps} heals itself on every open (world-structure).
+    await ensureWorldDirs(this.fs, root);
+    const [settings, manifest] = await Promise.all([
+      loadEdenSettings(this.fs, root),
+      loadEdenManifest(this.fs, root),
+    ]);
     const index = new SqliteIndexStorageAdapter();
     const indexPath = joinPath(root, ".eden", INDEX_FILE);
     try {
@@ -173,12 +207,21 @@ export class EdenService {
     this.current = {
       info: { name: root.slice(root.lastIndexOf("/") + 1), path: root },
       settings,
+      manifest,
     };
     this.index = index;
     this.snapshots = new SnapshotManager(this.fs, root, settings.snapshots);
 
-    await this.recents.touch(this.current.info);
+    // Recents carry preset/medium so the launcher can draw the right icon.
+    await this.recents.touch({
+      ...this.current.info,
+      preset: manifest.preset,
+      medium: manifest.medium,
+    });
     this.emit({ type: "eden-opened" });
+    if (migrationNotice) {
+      this.emit({ type: "notice", message: migrationNotice });
+    }
     this.startWatcher(root);
     this.startSnapshotTimer(settings.snapshots.intervalMinutes);
     void this.rebuild();
@@ -317,10 +360,22 @@ export class EdenService {
     }, 150);
   }
 
-  /** File tree of Projects/ + Worlds/, directories first, then files. */
+  /**
+   * File tree of the eden root: the preset scaffold, world/, and loose files
+   * (eden.json included) — machine dirs (.eden, exports, …) stay hidden.
+   */
   async tree(): Promise<TreeNode[]> {
     if (!this.current) return [];
     const root = this.current.info.path;
+
+    const isVisible = (entry: DirEntry): boolean =>
+      !entry.name.startsWith(".") &&
+      !(entry.kind === "directory" && WATCH_IGNORE_DIRS.includes(entry.name));
+
+    const byKindThenName = (a: DirEntry, b: DirEntry): number => {
+      if (a.kind !== b.kind) return a.kind === "directory" ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    };
 
     const build = async (relDir: string, name: string): Promise<TreeNode> => {
       const node: TreeNode = {
@@ -335,17 +390,8 @@ export class EdenService {
       } catch {
         return node;
       }
-      const visible = entries.filter(
-        (entry) =>
-          !entry.name.startsWith(".") &&
-          !(
-            entry.kind === "directory" && WATCH_IGNORE_DIRS.includes(entry.name)
-          ),
-      );
-      visible.sort((a, b) => {
-        if (a.kind !== b.kind) return a.kind === "directory" ? -1 : 1;
-        return a.name.localeCompare(b.name);
-      });
+      const visible = entries.filter(isVisible);
+      visible.sort(byKindThenName);
       for (const entry of visible) {
         const childRel = `${relDir}/${entry.name}`;
         if (entry.kind === "directory") {
@@ -361,13 +407,23 @@ export class EdenService {
       return node;
     };
 
-    const roots: TreeNode[] = [];
-    for (const top of ["Projects", "Worlds"]) {
-      if (await this.fs.exists(joinPath(root, top))) {
-        roots.push(await build(top, top));
+    let topEntries: DirEntry[];
+    try {
+      topEntries = await this.fs.list(root);
+    } catch {
+      return [];
+    }
+    const visible = topEntries.filter(isVisible);
+    visible.sort(byKindThenName);
+    const nodes: TreeNode[] = [];
+    for (const entry of visible) {
+      if (entry.kind === "directory") {
+        nodes.push(await build(entry.name, entry.name));
+      } else if (entry.kind === "file") {
+        nodes.push({ name: entry.name, path: entry.name, kind: "file" });
       }
     }
-    return roots;
+    return nodes;
   }
 
   async readFile(
@@ -585,7 +641,10 @@ export class EdenService {
     return this.writeFile(relPath, content, stat?.modifiedAtMs ?? null);
   }
 
-  /** Goals & streaks data (§7.8): totals plus a per-day series. */
+  /**
+   * Goals & streaks data (§7.8): totals plus a per-day series. The container
+   * is a top-level folder; "." means the whole eden (one eden = one story).
+   */
   stats(
     container: string,
     days = 35,
@@ -595,14 +654,25 @@ export class EdenService {
     series: { day: string; words: number }[];
   } {
     this.requireCurrent();
-    const totalRow = this.index!.query<{ total: number }>(
-      "SELECT COALESCE(SUM(word_count), 0) AS total FROM files WHERE container = ?",
-      [container],
-    );
-    const rows = this.index!.query<{ day: string; words: number }>(
-      "SELECT day, words FROM daily_words WHERE container = ? ORDER BY day DESC LIMIT ?",
-      [container, days],
-    );
+    const wholeEden = container === "." || container === "";
+    const totalRow = wholeEden
+      ? this.index!.query<{ total: number }>(
+          "SELECT COALESCE(SUM(word_count), 0) AS total FROM files",
+          [],
+        )
+      : this.index!.query<{ total: number }>(
+          "SELECT COALESCE(SUM(word_count), 0) AS total FROM files WHERE container = ?",
+          [container],
+        );
+    const rows = wholeEden
+      ? this.index!.query<{ day: string; words: number }>(
+          "SELECT day, SUM(words) AS words FROM daily_words GROUP BY day ORDER BY day DESC LIMIT ?",
+          [days],
+        )
+      : this.index!.query<{ day: string; words: number }>(
+          "SELECT day, words FROM daily_words WHERE container = ? ORDER BY day DESC LIMIT ?",
+          [container, days],
+        );
     const byDay = new Map(rows.map((row) => [row.day, row.words]));
 
     const series: { day: string; words: number }[] = [];
@@ -656,89 +726,24 @@ export class EdenService {
     return listIndexedFiles(this.index!);
   }
 
-  /** Codex entities — the `@` completion's universe. */
+  /** Codex entities — the `@` completion's universe (one eden, one codex). */
   listEntities(): IndexedEntitySummary[] {
     this.requireCurrent();
-    return listIndexedEntities(this.index!);
+    return listEntities(this.index!);
   }
 
-  /** Entities visible from one project: its codex plus linked worlds' (§7.5). */
-  async entitiesForProject(
-    projectName: string,
-  ): Promise<IndexedEntitySummary[]> {
+  /** The current eden's manifest (eden.json), fresh from the last load/save. */
+  manifest(): EdenManifest {
     this.requireCurrent();
-    const projects = await this.listProjects();
-    const project = projects.find((item) => item.name === projectName);
-    return listEntitiesForProject(
-      this.index!,
-      projectName,
-      project?.linkedWorlds ?? [],
-    );
+    return this.current!.manifest;
   }
 
-  /** Update a project's manifest (linked worlds, goals, order). */
-  async updateProject(
-    name: string,
-    patch: {
-      linkedWorlds?: string[];
-      goals?: ProjectManifest["goals"];
-      order?: string[];
-    },
-  ): Promise<ProjectManifest> {
+  /** Persist eden.json (goals, order, description) and adopt it in memory. */
+  async saveManifest(manifest: EdenManifest): Promise<void> {
     this.requireCurrent();
-    const projects = await this.listProjects();
-    const project = projects.find((item) => item.name === name);
-    if (!project) {
-      throw new EdenwrightError("NOT_FOUND", `No project called "${name}".`);
-    }
-    const next: ProjectManifest = {
-      ...project,
-      linkedWorlds: patch.linkedWorlds ?? project.linkedWorlds,
-      goals: patch.goals ?? project.goals,
-      order: patch.order ?? project.order,
-    };
-    const root = this.current!.info.path;
-    await this.fs.writeFile(
-      joinPath(root, "Projects", name, "project.json"),
-      serializeManifest(next),
-    );
+    await saveEdenManifest(this.fs, this.current!.info.path, manifest);
+    this.current!.manifest = manifest;
     this.scheduleTreeChanged();
-    return next;
-  }
-
-  /** Promote an entity from a project's codex to a world's codex (§7.5). */
-  async moveEntityToWorld(
-    entityRelPath: string,
-    worldName: string,
-  ): Promise<string> {
-    this.requireCurrent();
-    if (!entityRelPath.startsWith("Projects/")) {
-      throw new EdenwrightError(
-        "IO",
-        "Only project-local entities can be promoted to a world.",
-      );
-    }
-    const worlds = await this.listWorlds();
-    if (!worlds.some((world) => world.name === worldName)) {
-      throw new EdenwrightError("NOT_FOUND", `No world called "${worldName}".`);
-    }
-    const root = this.current!.info.path;
-    const fileName = entityRelPath.slice(entityRelPath.lastIndexOf("/") + 1);
-    const target = `Worlds/${worldName}/codex/${fileName}`;
-    if (await this.fs.exists(joinPath(root, target))) {
-      throw new EdenwrightError(
-        "IO",
-        `"${fileName}" already exists in ${worldName}'s codex.`,
-      );
-    }
-    await this.fs.move(joinPath(root, entityRelPath), joinPath(root, target));
-    const stat = await this.fs.stat(joinPath(root, target));
-    if (stat) this.ownWrites.set(target, stat.modifiedAtMs);
-    removeIndexedFile(this.index!, entityRelPath);
-    await indexFile(this.fs, this.index!, root, target).catch(() => undefined);
-    this.changedSinceSnapshot.add(entityRelPath).add(target);
-    this.scheduleTreeChanged();
-    return target;
   }
 
   /** Resolve a `[[raw target]]` to an eden-relative path, or null. */
@@ -785,38 +790,6 @@ export class EdenService {
   fileInfo(path: string) {
     this.requireCurrent();
     return getIndexedFileInfo(this.index!, path);
-  }
-
-  /** Create a project folder with its manifest and subfolders (§5.5). */
-  async createProject(input: CreateProjectInput): Promise<ProjectManifest> {
-    this.requireCurrent();
-    const manifest = await createProject(
-      this.fs,
-      this.current!.info.path,
-      input,
-    );
-    this.scheduleTreeChanged();
-    return manifest;
-  }
-
-  /** Every valid project manifest under Projects/, sorted. */
-  listProjects(): Promise<ProjectManifest[]> {
-    this.requireCurrent();
-    return listProjects(this.fs, this.current!.info.path);
-  }
-
-  /** Create a codex-first world under Worlds/ (SPEC §8.5). */
-  async createWorld(name: string): Promise<WorldManifest> {
-    this.requireCurrent();
-    const manifest = await createWorld(this.fs, this.current!.info.path, name);
-    this.scheduleTreeChanged();
-    return manifest;
-  }
-
-  /** Every valid world manifest under Worlds/, sorted. */
-  listWorlds(): Promise<WorldManifest[]> {
-    this.requireCurrent();
-    return listWorlds(this.fs, this.current!.info.path);
   }
 
   /** Persist eden settings and apply what changed live (§9.3 snapshot timer). */
